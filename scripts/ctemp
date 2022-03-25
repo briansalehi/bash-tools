@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# Make sure Bash won't read be confused with this function with
+# any other function or alias.
+unset ctemp
+
+# Move to a temporary directory and remember previous directory.
+# popd(1) can be used to go back to previous directory.
+function ctemp {
+    case "$1" in
+        -f|--file) xdg-open $(mktemp) ;;
+        -h|--help) echo -e "$0\n\t-f\tfile" ;;
+        *) pushd $(mktemp -d) >/dev/null ;;
+    esac
+}
+
