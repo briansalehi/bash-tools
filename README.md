@@ -31,5 +31,5 @@ a pull request. I will be responsive in a day or two.
 
 ## License
 
-This work is under MIT license.
+This work is under the [MIT License](https://github.com/briansalehi/bash-helpers/blob/master/LICENSE.md).
 
