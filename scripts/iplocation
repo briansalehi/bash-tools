@@ -64,7 +64,7 @@ function locate_address {
         exit 6
     fi
 
-    if [ "$JSON_OBJECT" = "null" ] || [ -z "$JSON_OBJECT" ]
+    if [ "$JSON_OBJECT" = "null" ] || [ -z "$JSON_OBJECT" ] || ! jq '.' <<< "$JSON_OBJECT" &>/dev/null
     then
         echo "$(tput setaf 1)failed to retrieve data from api$(tput sgr0)"
         exit 7
@@ -99,7 +99,7 @@ function print_results {
 
         while [ $# -gt 0 ]
         do
-            print_component $component
+            print_component $1
             shift
             [ $# -gt 0 ] && echo -en "${DELIMITER:-$'\n'}"
         done
