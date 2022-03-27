@@ -6,10 +6,6 @@ then
     echo "$(tput setaf 1)xclip is not installed$(tput sgr0)" >&2
 fi
 
-# Make sure Bash won't read be confused with this function with
-# any other function or alias.
-unset clip
-
 # Copy content to clipboard as is.
 # When argument given, will be read as file.
 # When no arguments found, read from standard input.
@@ -23,7 +19,7 @@ function clip {
     fi
 }
 
-# Make an alias for previous function
-unset clipboard
-alias clipboard='clip'
+# Redirect parameters into preceeding function. This is done to
+# make all aliases and functions behave similarly as commands.
+clip $1
 

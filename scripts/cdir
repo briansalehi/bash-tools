@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# Make sure Bash won't read be confused with this function with
-# any other function or alias.
-unset cdir
-
 # Change current working directory to destination using cd(1),
 # or create destination directories recursively if they do not
 # exist, and then cd(1) to that destination.
@@ -17,4 +13,8 @@ function cdir {
     mkdir --parents "$destination"
     pushd "$destination" >/dev/null
 }
+
+# Redirect parameters into preceeding function. This is done to
+# make all aliases and functions behave similarly as commands.
+cdir $1
 

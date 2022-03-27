@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# Make sure Bash won't read be confused with this function with
-# any other function or alias.
-unset ctemp
-
 # Move to a temporary directory and remember previous directory.
 # popd(1) can be used to go back to previous directory.
 function ctemp {
@@ -13,4 +9,8 @@ function ctemp {
         *) pushd $(mktemp -d) >/dev/null ;;
     esac
 }
+
+# Redirect parameters into preceeding function. This is done to
+# make all aliases and functions behave similarly as commands.
+ctemp $1
 
