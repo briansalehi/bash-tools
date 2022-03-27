@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Check if xclip is installed
-if ! [ -x "$(which xclip 2>/dev/null)" ]
+if ! which xclip 2>/dev/null
 then
     echo "$(tput setaf 1)xclip is not installed$(tput sgr0)" >&2
 fi
