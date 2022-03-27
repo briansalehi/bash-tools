@@ -20,6 +20,7 @@ And now you can probe commands like `ctemp`, `cdir /tmp/somewhere`.
 * **cdir**: Change your working directory into another, even if it doesn't exist.
 * **ctemp**: Create a temporary directory and move into it.
 * **clip**: Copy content to clipboard from file or *standard input*.
+* **iplocation**: Locate an IP address.
 
 ## Collaboration
 

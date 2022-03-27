@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function usage {
-    echo -e "Usage: $(basename $0) [-x <proxy>] [address]\n\nOptions:"
+    echo -e "Usage: $(basename $0) [-x <proxy>] [-v] [-o <i,c,a,p>] [-n] [-d <character>] [address]\n\nOptions:"
     echo -e "\taddress\t\t\tOptionally give an IP address to resolve other than your own."
     echo -e "\t-x,--proxy <address>\tUse proxy to resolve an IP address."
     echo -e "\t-o,--output <i,c,a,p>\tCustomize output by using i,c,a,p as ip,country,alpha,provider separated by comma"
