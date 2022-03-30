@@ -79,27 +79,33 @@ function print_component {
 }
 
 function print_results {
+    local -a parameters
+    local index=0
+
     # Prefer shifting over looping over parameters by
     # pushing output formats into function arguments,
     # this is because we will know if we are reading last
     # parameter so that we can skip printing delimiter.
     if [ -n "$OUTPUT" ]
     then
-        set -- ${OUTPUT//,/ }
+        IFS="," read -ra parameters <<< "$OUTPUT"
     else
-        set -- "ip" "country" "alpha" "isp"
+        IFS=" " read -ra parameters <<< "ip country alpha isp"
     fi
 
     # Print output parameters in order specified by user
     # or default order, and print delimiter after each
     # except the last.
-    while [ $# -gt 0 ]
+    while [ "${#parameters[*]}" -gt 0 ]
     do
-        print_component "$1"
-        shift
+        print_component "${parameters[$index]}"
 
-        # Print delimiter after parameter item except the last.
-        [ $# -gt 0 ] && echo -en "${DELIMITER:-$'\n'}" || echo
+        # Remove used parameter to check for size of array next.
+        unset 'parameters[$index]'
+        ((++index))
+
+        # Print delimiter after each parameter except the last.
+        [ "${#parameters[*]}" -gt 0 ] && echo -en "${DELIMITER:-$'\n'}" || echo
     done
 }
 
