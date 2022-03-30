@@ -9,12 +9,8 @@
 # to check if directory exists with -p option, so directory
 # check is omitted.
 function cdir {
-    local destination="$1"
+    destination="$1"
     mkdir --parents "$destination"
-    pushd "$destination" >/dev/null
+    pushd "$destination" >/dev/null || exit 1
 }
-
-# Redirect parameters into preceeding function. This is done to
-# make all aliases and functions behave similarly as commands.
-cdir $1
 

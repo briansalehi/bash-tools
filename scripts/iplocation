@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
 function usage {
-    echo -e "Usage: $(basename $0) [-x <proxy>] [-v] [-o <i,c,a,p>] [-n] [-d <character>] [address]\n\nOptions:"
+    echo -e "Usage: $(basename "$0") [-x <proxy>] [-v] [-o <i,c,a,p>] [-n] [-d <character>] [address]\n\nOptions:"
     echo -e "\taddress\t\t\tOptionally give an IP address to resolve other than your own."
     echo -e "\t-x,--proxy <address>\tUse proxy to resolve an IP address."
     echo -e "\t-o,--output <i,c,a,p>\tCustomize output by using i,c,a,p as ip,country,alpha,provider separated by comma"
     echo -e "\t-d,--delimiter <char>\tSeparate output by custome delimiter, default is newline"
     echo -e "\t-n,--no-header\t\tDo not show headers followed by the output"
-    echo -e "\t-v,--verbose\t\tShow every possible detail about an IP address."
     echo -e "\t-h,--help\t\tShow this help."
 }
 
@@ -24,6 +23,11 @@ function check_requirements {
     fi
 }
 
+function prepare_autocomplete {
+    complete -W "ip country alpha isp" iplocation -o
+    complete -W "ip country alpha isp" iplocation --output
+}
+
 function parse_arguments {
     # Parse given arguments
     while [ $# -gt 0 ]
@@ -34,7 +38,6 @@ function parse_arguments {
             -o|--output) OUTPUT="$2"; shift ;;
             -d|--delimiter) DELIMITER="$2"; shift ;;
             -n|--no-header) HEADLESS=1 ;;
-            -v|--verbose) VERBOSITY=1 ;;
             --) ;; # ignore
             *) ADDRESS="$1"; shift ;;
         esac
@@ -43,14 +46,8 @@ function parse_arguments {
 }
 
 function lookup_address {
-    # Set proxy option for curl if proxy address given
-    if [ -v PROXY_ADDRESS ]
-    then
-        PROXY_OPTION="-x $PROXY_ADDRESS"
-    fi
-
     # If no address was given, lookup user's public address
-    if [ -z "$ADDRESS" ] && ! ADDRESS="$(curl -s $PROXY_OPTION ifconfig.me/ip)"
+    if [ -z "$ADDRESS" ] && ! ADDRESS="$(curl -s -x "$PROXY_ADDRESS" ifconfig.me/ip)"
     then
         echo "$(tput setaf 1)failed to lookup address$(tput sgr0)"
         exit 5
@@ -58,7 +55,7 @@ function lookup_address {
 }
 
 function locate_address {
-    if ! JSON_OBJECT="$(curl -s $PROXY_OPTION "https://api.iplocation.net/?ip=$ADDRESS")"
+    if ! JSON_OBJECT="$(curl -s -x "$PROXY_ADDRESS" "https://api.iplocation.net/?ip=$ADDRESS")"
     then
         echo "$(tput setaf 1)failed to locate address$(tput sgr0)"
         exit 6
@@ -73,47 +70,43 @@ function locate_address {
 
 function print_component {
     case "$1" in
-        a) [ "${HEADLESS:-0}" -eq 0 ] && echo -n "alpha: ";   echo -n "$(tput setaf 2)$(jq -r '.country_code2' <<< "$JSON_OBJECT")$(tput sgr0)";;
-        c) [ "${HEADLESS:-0}" -eq 0 ] && echo -n "country: "; echo -n "$(tput setaf 2)$(jq -r '.country_name' <<< "$JSON_OBJECT")$(tput sgr0)";;
-        p) [ "${HEADLESS:-0}" -eq 0 ] && echo -n "isp: ";     echo -n "$(tput setaf 2)$(jq -r '.isp' <<< "$JSON_OBJECT")$(tput sgr0)";;
-        i) [ "${HEADLESS:-0}" -eq 0 ] && echo -n "address: "; echo -n "$(tput setaf 2)$(jq -r '.ip' <<< "$JSON_OBJECT")$(tput sgr0)";;
+        c|country)  [ "${HEADLESS:-0}" -eq 0 ] && echo -n "country: "; echo -n "$(tput setaf 2)$(jq -r '.country_name' <<< "$JSON_OBJECT")$(tput sgr0)";;
+        a|alpha)    [ "${HEADLESS:-0}" -eq 0 ] && echo -n "alpha: ";   echo -n "$(tput setaf 2)$(jq -r '.country_code2' <<< "$JSON_OBJECT")$(tput sgr0)";;
+        p|isp)      [ "${HEADLESS:-0}" -eq 0 ] && echo -n "isp: ";     echo -n "$(tput setaf 2)$(jq -r '.isp' <<< "$JSON_OBJECT")$(tput sgr0)";;
+        i|ip)       [ "${HEADLESS:-0}" -eq 0 ] && echo -n "address: "; echo -n "$(tput setaf 2)$(jq -r '.ip' <<< "$JSON_OBJECT")$(tput sgr0)";;
         *) return 1
     esac
 }
 
 function print_results {
-    # --verbose option will not take effect with --output option present
+    # Prefer shifting over looping over parameters by
+    # pushing output formats into function arguments,
+    # this is because we will know if we are reading last
+    # parameter so that we can skip printing delimiter.
     if [ -n "$OUTPUT" ]
     then
         set -- ${OUTPUT//,/ }
-
-        while [ $# -gt 0 ]
-        do
-            print_component $1
-            shift
-            [ $# -gt 0 ] && echo -en "${DELIMITER:-$'\n'}"
-        done
-    elif [ "${VERBOSITY:-0}" -eq 1 ]
-    then
-        set -- i c a p
-
-        while [ $# -gt 0 ]
-        do
-            print_component $1
-            shift
-            [ $# -gt 0 ] && echo -en "${DELIMITER:-$'\n'}"
-        done
     else
-        print_component c
+        set -- "ip" "country" "alpha" "isp"
     fi
 
-    # put newline character at the end anyway
-    echo
+    # Print output parameters in order specified by user
+    # or default order, and print delimiter after each
+    # except the last.
+    while [ $# -gt 0 ]
+    do
+        print_component "$1"
+        shift
+
+        # Print delimiter after parameter item except the last.
+        [ $# -gt 0 ] && echo -en "${DELIMITER:-$'\n'}" || echo
+    done
 }
 
 # Sequencially follow execution
 check_requirements
-parse_arguments $@
+prepare_autocomplete
+parse_arguments "$@"
 lookup_address
 locate_address
 print_results

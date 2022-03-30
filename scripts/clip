@@ -1,25 +1,18 @@
 #!/usr/bin/env bash
 
-# Check if xclip is installed
-if ! which xclip 2>/dev/null
-then
-    echo "$(tput setaf 1)xclip is not installed$(tput sgr0)" >&2
-fi
-
 # Copy content to clipboard as is.
 # When argument given, will be read as file.
 # When no arguments found, read from standard input.
-function clip {
-    if [ $# -eq 0 ] 
-    then
-        xclip -sel clip <<< "$(</dev/stdin)"
-    else
-        # read from given file
-        xclip -sel clip < "$1";
-    fi
-}
-
-# Redirect parameters into preceeding function. This is done to
-# make all aliases and functions behave similarly as commands.
-clip $1
+if ! which xclip &>/dev/null
+then
+    echo "$(tput setaf 1)xclip is not installed$(tput sgr0)" >&2
+    exit 1
+elif [ $# -eq 0 ] 
+then
+    # read frmo standard input
+    xclip -sel clip < /dev/stdin
+else
+    # read from given file
+    xclip -sel clip < "$1"
+fi
 
