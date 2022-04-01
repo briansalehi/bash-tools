@@ -47,7 +47,7 @@ function parse_arguments {
 
 function lookup_address {
     # If no address was given, lookup user's public address
-    if [ -z "$ADDRESS" ] && ! ADDRESS="$(curl -s -x "$PROXY_ADDRESS" ifconfig.me/ip)"
+    if [ "$ADDRESS" = "" ] && ! ADDRESS="$(curl -s -x "$PROXY_ADDRESS" ifconfig.me/ip)"
     then
         echo "$(tput setaf 1)failed to lookup address$(tput sgr0)"
         exit 5
@@ -61,7 +61,7 @@ function locate_address {
         exit 6
     fi
 
-    if [ "$JSON_OBJECT" = "null" ] || [ -z "$JSON_OBJECT" ] || ! jq '.' <<< "$JSON_OBJECT" &>/dev/null
+    if [ "$JSON_OBJECT" = "null" ] || [ "$JSON_OBJECT" = "" ] || ! jq '.' <<< "$JSON_OBJECT" &>/dev/null
     then
         echo "$(tput setaf 1)failed to retrieve data from api$(tput sgr0)"
         exit 7
@@ -74,7 +74,7 @@ function print_component {
         a|alpha)    [ "${HEADLESS:-0}" -eq 0 ] && echo -n "alpha: ";   echo -n "$(tput setaf 2)$(jq -r '.country_code2' <<< "$JSON_OBJECT")$(tput sgr0)";;
         p|isp)      [ "${HEADLESS:-0}" -eq 0 ] && echo -n "isp: ";     echo -n "$(tput setaf 2)$(jq -r '.isp' <<< "$JSON_OBJECT")$(tput sgr0)";;
         i|ip)       [ "${HEADLESS:-0}" -eq 0 ] && echo -n "address: "; echo -n "$(tput setaf 2)$(jq -r '.ip' <<< "$JSON_OBJECT")$(tput sgr0)";;
-        *) return 1
+        *) return 1 ;;
     esac
 }
 
@@ -86,7 +86,7 @@ function print_results {
     # pushing output formats into function arguments,
     # this is because we will know if we are reading last
     # parameter so that we can skip printing delimiter.
-    if [ -n "$OUTPUT" ]
+    if [ "$OUTPUT" != "" ]
     then
         IFS="," read -ra parameters <<< "$OUTPUT"
     else
