@@ -4,7 +4,7 @@
 # popd(1) can be used to go back to previous directory.
 function ctemp {
     case "$1" in
-        -f|--file) xdg-open "$(mktemp)" ;;
+        -f|--file) [ "$EDITOR" = "" ] && echo "EDITOR not set" || $EDITOR "$(mktemp)" ;;
         -h|--help) echo -e "Usage:\n\t$(basename "$0") [-f]\n\nOptions:\n\t-f\tfile\n\t-h\thelp" ;;
         *) pushd "$(mktemp -d)" >/dev/null || exit 1 ;;
     esac
