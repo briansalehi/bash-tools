@@ -1,4 +1,4 @@
-# Bash Helpers
+# Bash Tools
 
 Group of commands to be added to your system, per user basis preferrably,
 to extend your usage of Bash and remove the repetition of commands in chain
@@ -8,8 +8,8 @@ which are always used together like the way `mkdir` and `cd` are used together
 ## Usage
 
 ```sh
-git clone https://github.com/briansalehi/bash-helpers.git
-cd bash-helpers
+git clone https://github.com/briansalehi/bash-tools.git
+cd bash-tools
 make
 ```
 
