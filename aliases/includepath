@@ -15,13 +15,13 @@ includepath() {
 
     if grep -vq "$target_dir" <<< "$PATH" && [ -d "$target_dir/bin" ]
     then
-        export PATH="${target_dir}:${PATH}/bin"
+        export PATH="${target_dir}/bin:${PATH}"
         echo -e "${red}PATH += ${rst}${target_dir}${grn}/bin${rst}"
     fi
 
     if grep -vq "$target_dir" <<< "$LD_LIBRARY_PATH" && [ -d "$target_dir/lib" ]
     then
-        export LD_LIBRARY_PATH="${target_dir}${LD_LIBRARY_PATH:+-}${LD_LIBRARY_PATH}/lib"
+        export LD_LIBRARY_PATH="${target_dir}/lib:${LD_LIBRARY_PATH:+-}${LD_LIBRARY_PATH}"
         echo -e "${red}LD_LIBRARY_PATH += ${rst}${target_dir}${grn}/lib${rst}"
     fi
 }
