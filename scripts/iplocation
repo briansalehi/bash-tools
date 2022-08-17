@@ -12,11 +12,11 @@ function usage {
 
 function check_requirements {
     # Check if required tools exist before proceeding
-    if ! which curl &>/dev/null
+    if ! command -v curl &>/dev/null
     then
         echo "$(tput setaf 1)curl not installed$(tput sgr0)"
         exit 1
-    elif ! which jq &>/dev/null
+    elif ! command -v jq &>/dev/null
     then
         echo "$(tput setaf 1)jq not installed$(tput sgr0)"
         exit 2
