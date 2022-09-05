@@ -2,11 +2,21 @@
 
 # Move to a temporary directory and remember previous directory.
 # popd(1) can be used to go back to previous directory.
-function ctemp {
+function ctemp() {
     case "$1" in
-        -f|--file) [ "$EDITOR" = "" ] && echo "EDITOR not set" || $EDITOR "$(mktemp)" ;;
-        -h|--help) echo -e "Usage:\n\t$(basename "$0") [-f]\n\nOptions:\n\t-f\tfile\n\t-h\thelp" ;;
-        *) pushd "$(mktemp -d)" >/dev/null || exit 1 ;;
+        -f|--file)
+            if [ "$EDITOR" == "" ]
+            then
+                echo "EDITOR not set"
+            else
+                $EDITOR "$(mktemp)"
+            fi
+            ;;
+        -h|--help)
+            echo -e "Usage:\n\t$(basename "$0") [-f]\n\nOptions:\n\t-f\tfile\n\t-h\thelp"
+            ;;
+        *)
+            pushd "$(mktemp -d)" >/dev/null || exit 1
+            ;;
     esac
 }
-
