@@ -26,7 +26,7 @@ $(aliases):
 
 alias_notice:
 	@echo -ne "\033[1;32m"
-	@echo -ne "Make sure '$(HOME)/.bash_helpers' is sourced in your .bashrc"
+	@echo -ne "Make sure '$(HOME)/.bash_helpers/*' is sourced in your .bashrc"
 	@echo -e "\033[0m"
 
 remove:
