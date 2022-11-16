@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+country="US"
+
+function get_help() {
+    echo "mtproto [-h] [-c <country_name=US>]"
+    echo
+    echo "options"
+    echo
+    echo " -h,--help            print help menu"
+    echo " -c,--country <code>  country code or name"
+    exit
+}
+
+function choose_country()
+{
+    local country_name="$1"
+
+    case "$country_name" in
+        GB|Britain) country=GB ;;
+        US|America) country=US ;;
+        DE|Germany) country=DE ;;
+        *) echo "unknown country, falling back to US"; country=US
+    esac
+}
+
+[ -s /tmp/mtproto.hosts ] && rm /tmp/mtproto.hosts
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        -h|--help) get_help ;;
+        -c|--country) choose_country "$2"; limit_country=1; shift ;;
+        *) get_help ;;
+    esac
+    shift
+done
+
+# retrieve latest proxy list
+curl -s 'https://mtpro.xyz/api/?type=mtproto' > /tmp/mtproto.list
+
+max_count=4
+
+for mt_index in $(seq 0 "$(jq '. | length' /tmp/mtproto.list)")
+do
+    mt_object="$(jq -r ".[$mt_index]" /tmp/mtproto.list)"
+    mt_country="$(jq -r '.country' <<< "$mt_object")"
+
+    if [ "${limit_country:-0}" -eq 1 ] && [ "$mt_country" != "$country" ]
+    then
+        continue
+    fi
+
+    mt_host="$(jq -r '.host' <<< "$mt_object")"
+    mt_port="$(jq -r '.port' <<< "$mt_object")"
+    mt_secret="$(jq -r '.secret' <<< "$mt_object")"
+
+    if ping -n -c 1 -W 1 "$mt_host" | awk -v cc="$mt_country" -v host="$mt_host" -v port="$mt_port" -v secret="$mt_secret" 'BEGIN{FS="/"} $1 == "rtt min" {printf "%d %s tg://proxy?server=%s&port=%d&secret=%s\n", $5,cc,host,port,secret}' >> /tmp/mtproto.hosts
+    then
+        ((--max_count))
+
+        [ "$max_count" -eq 0 ] && break
+    fi
+
+    ((++mt_index))
+done
+
+mt_line="$(nl /tmp/mtproto.hosts | sort -k 2 -n | head -n 1 | awk '{print $1}')"
+mt_ping="$(sed -n "${mt_line}p" /tmp/mtproto.hosts | cut -d ' ' -f 1)"
+mt_country="$(sed -n "${mt_line}p" /tmp/mtproto.hosts | cut -d ' ' -f 2)"
+mt_address="$(sed -n "${mt_line}p" /tmp/mtproto.hosts | cut -d ' ' -f 3)"
+
+echo -e "\e[1;31m""$mt_ping ms ($mt_country): ""\e[0m""$mt_address"
