@@ -6,7 +6,7 @@ function proxy() {
     local proxy_user
     local proxy_port
     local proxy_jump
-    local proxy_address="$proxy_user@$proxy_host"
+    local proxy_address
     local -a active_processes
     local selected_process
     local config_path="$HOME/.config"
@@ -24,6 +24,8 @@ function proxy() {
         echo "config file not found"
         return
     fi
+
+    proxy_address="$proxy_user@$proxy_host"
 
     if [ "$1" == "activate" ]
     then
