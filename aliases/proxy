@@ -29,6 +29,9 @@ function proxy() {
 
     if [ "$1" == "activate" ]
     then
+        ssh -f -N -D localhost:1080 "$proxy_address" -p "$proxy_port"
+    elif [ "$1" == "jump" ]
+    then
         ssh -f -N -D localhost:1080 ${proxy_jump:+-J} "$proxy_jump" "$proxy_address" -p "$proxy_port"
     elif [ "$1" == "deactivate" ]
     then
