@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+
+function proxy() {
+    local proxy_host
+    local proxy_user
+    local proxy_port
+    local proxy_jump
+    local proxy_address="$proxy_user@$proxy_host"
+    local -a active_processes
+    local selected_process
+    local config_path="$HOME/.config"
+    local config="$config_path/proxy.conf"
+
+    [ -d "$config_path" ] || mkdir "$config_path"
+
+    if [ -s "$config" ]
+    then
+        proxy_host="$(awk 'BEGIN{FS="="} $1 == "proxy_host" {print $2}' "$config")"
+        proxy_user="$(awk 'BEGIN{FS="="} $1 == "proxy_user" {print $2}' "$config")"
+        proxy_port="$(awk 'BEGIN{FS="="} $1 == "proxy_port" {print $2}' "$config")"
+        proxy_jump="$(awk 'BEGIN{FS="="} $1 == "proxy_jump" {print $2}' "$config")"
+    else
+        echo "config file not found"
+        return
+    fi
+
+    if [ "$1" == "activate" ]
+    then
+        ssh -f -N -D localhost:1080 ${proxy_jump:+-J} "$proxy_jump" "$proxy_address" -p "$proxy_port"
+    elif [ "$1" == "deactivate" ]
+    then
+        read -ra active_processes <<< "$(pgrep "^ssh$" | xargs)"
+
+        if [ "${#active_processes[@]}" -gt 1 ]
+        then
+            select selected_process in "${active_processes[@]}"
+            do
+                kill -KILL "$selected_process"
+                break
+            done
+        else
+            echo "no active connection"
+        fi
+    elif [ "$1" == "reconnect" ]
+    then
+        proxy deactivate
+        proxy activate
+    fi
+}
