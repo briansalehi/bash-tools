@@ -27,13 +27,21 @@ function proxy() {
 
     proxy_address="$proxy_user@$proxy_host"
 
-    if [ "$1" == "activate" ]
+    if [ "$1" == "activate" ] && [ "${2:-ssh}" == "ssh" ]
     then
         ssh -f -N -D localhost:1080 "$proxy_address" -p "$proxy_port"
+    elif [ "$1" == "activate" ] && [ "${2:-ssh}" == "tor" ]
+    then
+        if sudo systemctl start tor.service
+        then
+            echo "activated"
+        else
+            echo "failed to activate"
+        fi
     elif [ "$1" == "jump" ]
     then
         ssh -f -N -D localhost:1080 ${proxy_jump:+-J} "$proxy_jump" "$proxy_address" -p "$proxy_port"
-    elif [ "$1" == "deactivate" ]
+    elif [ "$1" == "deactivate" ] && [ "${2:-ssh}" == "ssh" ]
     then
         read -ra active_processes <<< "$(pgrep "^ssh$" | xargs)"
 
@@ -47,9 +55,33 @@ function proxy() {
         else
             echo "no active connection"
         fi
-    elif [ "$1" == "reconnect" ]
+    elif [ "$1" == "deactivate" ] && [ "${2:-ssh}" == "tor" ]
+    then
+        if ! systemctl is-active tor.service -q
+        then
+            echo "already deactive"
+            return 0
+        fi
+
+        if sudo systemctl stop tor.service
+        then
+            echo "deactivated"
+        else
+            echo "failed to deactivate"
+        fi
+    elif [ "$1" == "reconnect" ] && [ "${2:-ssh}" == "ssh" ]
     then
         proxy deactivate
         proxy activate
+    elif [ "$1" == "reconnect" ] && [ "${2:-ssh}" == "tor" ]
+    then
+        if sudo systemctl restart tor.service
+        then
+            echo "restarted"
+        else
+            echo "failed to restart"
+        fi
+    else
+        echo "invalid option"
     fi
 }

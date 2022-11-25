@@ -16,10 +16,10 @@ function choose_country()
 {
     local country_name="$1"
 
-    case "$country_name" in
-        GB|Britain) country=GB ;;
-        US|America) country=US ;;
-        DE|Germany) country=DE ;;
+    case "${country_name,,}" in
+        gb|britain) country=GB ;;
+        us|america) country=US ;;
+        de|germany) country=DE ;;
         *) echo "unknown country, falling back to US"; country=US
     esac
 }
