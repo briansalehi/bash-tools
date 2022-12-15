@@ -68,7 +68,7 @@ function iplocation_locate_address {
     fi
 }
 
-function print_component {
+function iplocation_print_component {
     case "$1" in
         c|country)  [ "${HEADLESS:-0}" -eq 0 ] && echo -n "country: "; echo -n "$(tput setaf 2)$(jq -r '.country_name' <<< "$JSON_OBJECT")$(tput sgr0)";;
         a|alpha)    [ "${HEADLESS:-0}" -eq 0 ] && echo -n "alpha: ";   echo -n "$(tput setaf 2)$(jq -r '.country_code2' <<< "$JSON_OBJECT")$(tput sgr0)";;
@@ -98,7 +98,7 @@ function iplocation_print_results {
     # except the last.
     while [ "${#parameters[*]}" -gt 0 ]
     do
-        print_component "${parameters[$index]}"
+        iplocation_print_component "${parameters[$index]}"
 
         # Remove used parameter to check for size of array next.
         unset 'parameters[$index]'
