@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-function usage {
+function iplocation_usage {
     echo -e "Usage: $(basename "$0") [-x <proxy>] [-v] [-o <i,c,a,p>] [-n] [-d <character>] [address]\n\nOptions:"
     echo -e "\taddress\t\t\tOptionally give an IP address to resolve other than your own."
     echo -e "\t-x,--proxy <address>\tUse proxy to resolve an IP address."
@@ -10,7 +10,7 @@ function usage {
     echo -e "\t-h,--help\t\tShow this help."
 }
 
-function check_requirements {
+function iplocation_check_requirements {
     # Check if required tools exist before proceeding
     if ! command -v curl &>/dev/null
     then
@@ -23,17 +23,17 @@ function check_requirements {
     fi
 }
 
-function prepare_autocomplete {
+function iplocation_prepare_autocomplete {
     complete -W "ip country alpha isp" iplocation -o
     complete -W "ip country alpha isp" iplocation --output
 }
 
-function parse_arguments {
+function iplocation_parse_arguments {
     # Parse given arguments
     while [ $# -gt 0 ]
     do
         case "$1" in
-            -h|--help) usage; exit 0 ;;
+            -h|--help) iplocation_usage; exit 0 ;;
             -x|--proxy) PROXY_ADDRESS="$2"; shift ;;
             -o|--output) OUTPUT="$2"; shift ;;
             -d|--delimiter) DELIMITER="$2"; shift ;;
@@ -45,7 +45,7 @@ function parse_arguments {
     done
 }
 
-function lookup_address {
+function iplocation_lookup_address {
     # If no address was given, lookup user's public address
     if [ "$ADDRESS" = "" ] && ! ADDRESS="$(curl -s -x "$PROXY_ADDRESS" ifconfig.me/ip)"
     then
@@ -54,7 +54,7 @@ function lookup_address {
     fi
 }
 
-function locate_address {
+function iplocation_locate_address {
     if ! JSON_OBJECT="$(curl -s -x "$PROXY_ADDRESS" "https://api.iplocation.net/?ip=$ADDRESS")"
     then
         echo "$(tput setaf 1)failed to locate address$(tput sgr0)"
@@ -78,7 +78,7 @@ function print_component {
     esac
 }
 
-function print_results {
+function iplocation_print_results {
     local -a parameters
     local index=0
 
@@ -109,11 +109,12 @@ function print_results {
     done
 }
 
-# Sequencially follow execution
-check_requirements
-prepare_autocomplete
-parse_arguments "$@"
-lookup_address
-locate_address
-print_results
-
+function iplocation() {
+    # Sequencially follow execution of defined functions
+    iplocation_check_requirements
+    iplocation_prepare_autocomplete
+    iplocation_parse_arguments "$@"
+    iplocation_lookup_address
+    iplocation_locate_address
+    iplocation_print_results
+}
