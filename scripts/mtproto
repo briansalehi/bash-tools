@@ -49,10 +49,12 @@ function mtproto() {
     local secret
     local object
     local latency
-    local address
+    local link
     local entries
     local accepted=0
     local ping_entry
+    local choice
+    local -A results
 
     [ -s "$mtproto_cache" ] && rm "$mtproto_cache"
 
@@ -122,8 +124,19 @@ function mtproto() {
     do
         latency="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $2}')"
         country="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $3}')"
-        address="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $4}')"
+        link="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $4}')"
+        address="$(sed -n 's/.*server=\([0-9.]\+\)\&port=\([0-9]\+\)\&.*/\1:\2/p' <<< "$link")"
 
-        echo -e "\e[1;31m""${latency}ms: ""\e[0m""$address"
+        results["$address (${latency}ms)"]="$link"
     done
+
+    if [ "${#results[@]}" -eq 1 ]
+    then
+        xdg-open "${results[*]}"
+    else
+        select choice in "${!results[@]}"
+        do
+            xdg-open "${results[$choice]}"
+        done
+    fi
 }
