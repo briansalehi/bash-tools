@@ -132,7 +132,7 @@ function mtproto() {
 
     if [ "${#results[@]}" -eq 1 ]
     then
-        echo -e "Prompting telegram for \e[1;31m${!results[@]}\e[0m" >&2
+        echo -e "Prompting telegram for \e[1;31m${!results[*]}\e[0m" >&2
         xdg-open "${results[*]}"
     else
         select choice in "${!results[@]}"
