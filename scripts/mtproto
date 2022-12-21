@@ -83,7 +83,7 @@ function mtproto() {
 
     entries="$(jq '. | length' "$address_list")"
 
-    echo -n "loading " >&2
+    echo -n "Loading " >&2
 
     for index in $(seq 0 "${entries:-1}")
     do
@@ -132,11 +132,13 @@ function mtproto() {
 
     if [ "${#results[@]}" -eq 1 ]
     then
+        echo -e "Prompting telegram for \e[1;31m${!results[@]}\e[0m" >&2
         xdg-open "${results[*]}"
     else
         select choice in "${!results[@]}"
         do
-            xdg-open "${results[$choice]}"
+            echo -e "Prompting telegram for \e[1;31m${choice}\e[0m" >&2
+            xdg-open "${results[$choice]}" 2>/dev/null
         done
     fi
 }
