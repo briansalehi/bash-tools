@@ -24,6 +24,19 @@ function mtproto_choose_country() {
     esac
 }
 
+function mtproto_report_query() {
+    local entries="$1"
+    local index="$2"
+    local accepted="$3"
+    local query
+    # global field_length to save previous query lenght for next iteration
+
+    query="$accepted ($index/$entries entries)"
+    [ "$index" -gt 0 ] && printf "%0.s\b" $(seq 1 "${field_length:-0}") >&2
+    field_length="${#query}"
+    echo -ne "$query" >&2
+}
+
 function mtproto() {
     local match_limit=1
     local max_count="$match_limit"
@@ -40,7 +53,6 @@ function mtproto() {
     local entries
     local accepted=0
     local ping_entry
-    local query
 
     [ -s "$mtproto_cache" ] && rm "$mtproto_cache"
 
@@ -68,16 +80,12 @@ function mtproto() {
     fi
 
     entries="$(jq '. | length' "$address_list")"
-    query="$accepted ($index/$entries)"
 
-    echo -n "loading entry $query" >&2
+    echo -n "loading " >&2
 
     for index in $(seq 0 "${entries:-1}")
     do
-        printf "%0.s\b" $(seq 1 "${#query}") >&2
-
-        query="$accepted ($index/$entries)"
-        echo -ne "$query" >&2
+        mtproto_report_query "$entries" "$index" "$accepted"
 
         object="$(jq -r ".[$index]" "$address_list")"
         country="$(jq -r '.country' <<< "$object")"
@@ -100,6 +108,9 @@ function mtproto() {
              'BEGIN{FS="/"} $1 == "rtt min" {printf "%d %s tg://proxy?server=%s&port=%d&secret=%s\n", $5,c,h,p,s}'
 
             ((++accepted))
+
+            mtproto_report_query "$entries" "$index" "$accepted"
+
             [ "$((--max_count))" -eq 0 ] && break
         fi
 
