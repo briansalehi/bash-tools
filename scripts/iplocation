@@ -15,11 +15,11 @@ function iplocation_check_requirements {
     if ! command -v curl &>/dev/null
     then
         echo "$(tput setaf 1)curl not installed$(tput sgr0)"
-        exit 1
+        return 1
     elif ! command -v jq &>/dev/null
     then
         echo "$(tput setaf 1)jq not installed$(tput sgr0)"
-        exit 2
+        return 2
     fi
 }
 
@@ -33,7 +33,7 @@ function iplocation_parse_arguments {
     while [ $# -gt 0 ]
     do
         case "$1" in
-            -h|--help) iplocation_usage; exit 0 ;;
+            -h|--help) iplocation_usage; return ;;
             -x|--proxy) PROXY_ADDRESS="$2"; shift ;;
             -o|--output) OUTPUT="$2"; shift ;;
             -d|--delimiter) DELIMITER="$2"; shift ;;
@@ -50,7 +50,7 @@ function iplocation_lookup_address {
     if [ "$ADDRESS" = "" ] && ! ADDRESS="$(curl -s -x "$PROXY_ADDRESS" ifconfig.me/ip)"
     then
         echo "$(tput setaf 1)failed to lookup address$(tput sgr0)"
-        exit 5
+        return 5
     fi
 }
 
@@ -58,13 +58,13 @@ function iplocation_locate_address {
     if ! JSON_OBJECT="$(curl -s -x "$PROXY_ADDRESS" "https://api.iplocation.net/?ip=$ADDRESS")"
     then
         echo "$(tput setaf 1)failed to locate address$(tput sgr0)"
-        exit 6
+        return 6
     fi
 
     if [ "$JSON_OBJECT" = "null" ] || [ "$JSON_OBJECT" = "" ] || ! jq '.' <<< "$JSON_OBJECT" &>/dev/null
     then
         echo "$(tput setaf 1)failed to retrieve data from api$(tput sgr0)"
-        exit 7
+        return 7
     fi
 }
 
@@ -111,10 +111,10 @@ function iplocation_print_results {
 
 function iplocation() {
     # Sequencially follow execution of defined functions
-    iplocation_check_requirements
-    iplocation_prepare_autocomplete
-    iplocation_parse_arguments "$@"
-    iplocation_lookup_address
-    iplocation_locate_address
-    iplocation_print_results
+    iplocation_check_requirements   || return
+    iplocation_prepare_autocomplete || return
+    iplocation_parse_arguments "$@" || return
+    iplocation_lookup_address       || return
+    iplocation_locate_address       || return
+    iplocation_print_results        || return
 }
