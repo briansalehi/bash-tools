@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+function path_dirname() {
+    dirname "$@"
+}
+
+function path_basename() {
+    local file_name
+    file_name="$(basename "$@")"
+    echo "${file_name%.*}"
+}
+
+function path_stem() {
+    local file_name
+    file_name=
+    echo "${@##.*}"
+}
+
+function path_extension() {
+}
+
+function path_basename_

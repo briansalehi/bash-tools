@@ -31,8 +31,8 @@ function mtproto_report_query() {
     local query
     # global field_length to save previous query lenght for next iteration
 
-    query="$accepted ($index/$entries entries)"
-    [ "$index" -gt 0 ] && printf "%0.s\b" $(seq 1 "${field_length:-0}") >&2
+    query="$accepted proxies ($index/$entries entries)"
+    printf "%0.s\b" $(seq 1 "${field_length:-0}") >&2
     field_length="${#query}"
     echo -ne "$query" >&2
 }
@@ -83,7 +83,7 @@ function mtproto() {
 
     entries="$(jq '. | length' "$address_list")"
 
-    echo -n "Loading " >&2
+    echo -n "Loading  " >&2
 
     for index in $(seq 0 "${entries:-1}")
     do
@@ -127,7 +127,7 @@ function mtproto() {
         link="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $4}')"
         address="$(sed -n 's/.*server=\([0-9.]\+\)\&port=\([0-9]\+\)\&.*/\1:\2/p' <<< "$link")"
 
-        results["$address (${latency}ms)"]="$link"
+        results["$country: $address (${latency}ms)"]="$link"
     done
 
     if [ "${#results[@]}" -eq 1 ]
