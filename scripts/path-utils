@@ -16,7 +16,3 @@ function path_stem() {
     echo "${@##.*}"
 }
 
-function path_extension() {
-}
-
-function path_basename_
