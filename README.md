@@ -21,6 +21,8 @@ And now you can probe commands like `ctemp`, `cdir /tmp/somewhere`.
 * **ctemp**: Create a temporary directory and move into it.
 * **clip**: Copy content to clipboard from file or *standard input*.
 * **iplocation**: Locate an IP address.
+* **mtproto**: Retrieve MTProto Telegram proxy
+* **includepath**: Inclusion function to add `<target>/bin` to `PATH` and `<target>/lib` to `LD_LIBRARY_PATH`.
 
 ## Collaboration
 
