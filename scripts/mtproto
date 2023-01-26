@@ -2,6 +2,7 @@
 
 mtproto_country="US"
 mtproto_cache="/tmp/mtproto.hosts"
+address_list="/tmp/mtproto.list"
 
 function mtproto_usage() {
     echo "mtproto [-h] [-c <country_name=US>]"
@@ -20,6 +21,7 @@ function mtproto_choose_country() {
         gb|britain) mtproto_country=GB ;;
         us|america) mtproto_country=US ;;
         de|germany) mtproto_country=DE ;;
+        any) mtproto_country=ANY ;;
         *) echo "unknown country, falling back to US"; mtproto_country=US
     esac
 }
@@ -37,24 +39,78 @@ function mtproto_report_query() {
     echo -ne "$query" >&2
 }
 
+function mtproto_check_host_availability() {
+    local object="$1"
+    local country="$2"
+    local host
+    local port
+    local secret
+    local ping_entry
+
+    host="$(jq -r '.host' <<< "$object")"
+    port="$(jq -r '.port' <<< "$object")"
+    secret="$(jq -r '.secret' <<< "$object")"
+
+    if ping_entry="$(ping -n -c1 -W1 "$host" 2>/dev/null)"
+    then
+        echo "$ping_entry" | awk -v c="$country" \
+         -v h="$host" \
+         -v p="$port" \
+         -v s="$secret" \
+         'BEGIN{FS="/"} $1 == "rtt min" {printf "%d %s tg://proxy?server=%s&port=%d&secret=%s\n", $5,c,h,p,s}'
+        return 0
+    else
+        return 1
+    fi
+}
+
+function mtproto_retrieve_latest_proxy_list() {
+    if ! curl -s 'https://mtpro.xyz/api/?type=mtproto' > "$address_list"
+    then
+        echo "failed to load uri" >&2
+        return
+    fi
+}
+
+function mtproto_print_results() {
+    local match_limit="$1"
+    local index
+    local latency
+    local link
+    local choice
+    local existing_entries
+    local -A results
+
+    # Sometimes, available proxy entries may not reach user supplied limit.
+    # Therefore, make sure limit does not get passed behind existing entries
+    existing_entries="$(wc -l "$mtproto_cache" | cut -d ' ' -f 1)"
+    [ "$match_limit" -gt "$existing_entries" ] && match_limit="$existing_entries"
+
+    for index in $(seq 1 "$match_limit")
+    do
+        latency="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $2}')"
+        country="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $3}')"
+        link="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $4}')"
+        address="$(sed -n 's/.*server=\(.*\)\&port=\([0-9]\+\)\&.*/\1:\2/p' <<< "$link")"
+
+        results["[$country]: $address (${latency}ms)"]="$link"
+    done
+
+    select choice in "${!results[@]}"
+    do
+        echo -e "Prompting telegram for \e[1;31m${choice}\e[0m" >&2
+        xdg-open "${results[$choice]}" 2>/dev/null
+    done
+}
+
 function mtproto() {
     local match_limit=1
     local max_count="$match_limit"
-    local address_list="/tmp/mtproto.list"
     local index
     local country
-    local country
-    local port
-    local host
-    local secret
     local object
-    local latency
-    local link
     local entries
     local accepted=0
-    local ping_entry
-    local choice
-    local -A results
 
     [ -s "$mtproto_cache" ] && rm "$mtproto_cache"
 
@@ -74,12 +130,7 @@ function mtproto() {
         *) match_limit=1; max_count="1" ;;
     esac
 
-    # retrieve latest proxy list
-    if ! curl -s 'https://mtpro.xyz/api/?type=mtproto' > "$address_list"
-    then
-        echo "failed to load uri" >&2
-        return
-    fi
+    mtproto_retrieve_latest_proxy_list
 
     entries="$(jq '. | length' "$address_list")"
 
@@ -87,58 +138,27 @@ function mtproto() {
 
     for index in $(seq 0 "${entries:-1}")
     do
-        mtproto_report_query "$entries" "$index" "$accepted"
-
         object="$(jq -r ".[$index]" "$address_list")"
         country="$(jq -r '.country' <<< "$object")"
 
-        if [ "$country" != "$mtproto_country" ]
+        mtproto_report_query "$entries" "$index" "$accepted"
+
+        if [ "$mtproto_country" == "ANY" ] || [ "$country" == "$mtproto_country" ]
         then
-            continue
+            if mtproto_check_host_availability "$object" "$country"
+            then
+                ((++accepted))
+                ((--max_count))
+
+                mtproto_report_query "$entries" "$index" "$accepted"
+            fi
         fi
 
-        host="$(jq -r '.host' <<< "$object")"
-        port="$(jq -r '.port' <<< "$object")"
-        secret="$(jq -r '.secret' <<< "$object")"
-
-        if ping_entry="$(ping -n -c1 -W1 "$host")"
-        then
-            echo "$ping_entry" | awk -v c="$country" \
-             -v h="$host" \
-             -v p="$port" \
-             -v s="$secret" \
-             'BEGIN{FS="/"} $1 == "rtt min" {printf "%d %s tg://proxy?server=%s&port=%d&secret=%s\n", $5,c,h,p,s}'
-
-            ((++accepted))
-
-            mtproto_report_query "$entries" "$index" "$accepted"
-
-            [ "$((--max_count))" -eq 0 ] && break
-        fi
+        [ "$max_count" -eq 0 ] && break
 
         ((++index))
     done | nl | sort -k 2 -n 1> "$mtproto_cache"
-    echo; echo
+    printf "\n\n"
 
-    for index in $(seq 1 "$match_limit")
-    do
-        latency="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $2}')"
-        country="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $3}')"
-        link="$(sed -n "${index}p" "$mtproto_cache" | awk '{print $4}')"
-        address="$(sed -n 's/.*server=\([0-9.]\+\)\&port=\([0-9]\+\)\&.*/\1:\2/p' <<< "$link")"
-
-        results["$country: $address (${latency}ms)"]="$link"
-    done
-
-    if [ "${#results[@]}" -eq 1 ]
-    then
-        echo -e "Prompting telegram for \e[1;31m${!results[*]}\e[0m" >&2
-        xdg-open "${results[*]}"
-    else
-        select choice in "${!results[@]}"
-        do
-            echo -e "Prompting telegram for \e[1;31m${choice}\e[0m" >&2
-            xdg-open "${results[$choice]}" 2>/dev/null
-        done
-    fi
+    mtproto_print_results "$match_limit"
 }
