@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-mtproto_country="US"
+mtproto_country="ANY"
 mtproto_cache="/tmp/mtproto.hosts"
 address_list="/tmp/mtproto.list"
 
@@ -22,7 +22,7 @@ function mtproto_choose_country() {
         us|america) mtproto_country=US ;;
         de|germany) mtproto_country=DE ;;
         any) mtproto_country=ANY ;;
-        *) echo "unknown country, falling back to US"; mtproto_country=US
+        *) echo "unknown country, falling back to ANY"; mtproto_country=ANY
     esac
 }
 
