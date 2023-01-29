@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 
-# Change current working directory to destination using cd(1),
-# or create destination directories recursively if they do not
-# exist, and then cd(1) to that destination.
+# Recursively make destination directory, then move into it.
+#
+# This tiny shell function checks destination existance, and
+# make(1) it in case of absence.
+# Then uses pushd(1) to change current working directory to it.
+#
 # Note that previous working directory will be remembered so that
 # popd(1) can be used to move working directory back into it.
-# Note that mkdir(1) does not need to be inside an if statement
-# to check if directory exists with -p option, so directory
-# check is omitted.
+#
 function cdir {
     destination="$1"
-    mkdir --parents "$destination"
+    [ -d "$destination" ] || mkdir --parents "$destination"
     pushd "$destination" >/dev/null || exit 1
 }
 
