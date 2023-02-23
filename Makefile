@@ -16,7 +16,7 @@ $(scripts):
 
 script_notice:
 	@echo -e "\n\033[1;33mAppend this line to $(HOME)/.bashrc file:\033[0m"
-	@echo -e "\033[1;31m[ -d ~/.bash_tools ] && source ~/.bash_tools/*\033[0m"
+	@echo -e "\033[1;31m[ -d ~/.bash_tools ] && for tool in ~/.bash_tools/*; do source \$$tool; done\033[0m"
 
 remove:
 	rm --recursive --force ~/.bash_tools
