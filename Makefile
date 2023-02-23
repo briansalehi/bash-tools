@@ -11,13 +11,12 @@ help:
 all: $(scripts) script_notice
 
 $(scripts):
-	mkdir --parents ~/.bash_tools
-	cp scripts/$@ ~/.bash_tools
+	mkdir --parents $(HOME)/.bash_tools
+	cp scripts/$@ $(HOME)/.bash_tools
 
 script_notice:
-	@echo -ne "\033[1;32m"
-	@echo -ne "Make sure '$(HOME)/.bash_tools' is sourced in your ~/.bashrc file"
-	@echo -e "\033[0m"
+	@echo -e "\n\033[1;33mAppend this line to $(HOME)/.bashrc file:\033[0m"
+	@echo -e "\033[1;31m[ -d ~/.bash_tools ] && source ~/.bash_tools/*\033[0m"
 
 remove:
 	rm --recursive --force ~/.bash_tools

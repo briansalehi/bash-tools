@@ -26,7 +26,6 @@ function genesis_generate_uri()
 {
     local keyword
     local uri
-    local query
     local filters
 
     keyword="$(genesis_encode_uri "$1")"
