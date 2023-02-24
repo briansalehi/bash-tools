@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
 
 function iplocation_usage {
-    echo -e "Usage: $(basename "$0") [-x <proxy>] [-v] [-o <i,c,a,p>] [-n] [-d <character>] [address]\n\nOptions:"
+    echo -e "Usage: iplocation [-x <proxy>] [-v] [-o <i,c,a,p>] [-n] [-d <character>] [address]"
+    echo -e "\n\nOptions:"
     echo -e "\taddress\t\t\tOptionally give an IP address to resolve other than your own."
     echo -e "\t-x,--proxy <address>\tUse proxy to resolve an IP address."
-    echo -e "\t-o,--output <i,c,a,p>\tCustomize output by using i,c,a,p as ip,country,alpha,provider separated by comma"
+    echo -e "\t-o,--output <name>\tCustomize output by column names separated by comma"
+    echo -e "\t                  \tcolumn names: <i,ip> <c,country> <a,alpha> <p,provider>"
     echo -e "\t-d,--delimiter <char>\tSeparate output by custome delimiter, default is newline"
     echo -e "\t-n,--no-header\t\tDo not show headers followed by the output"
     echo -e "\t-h,--help\t\tShow this help."
+    echo -e "\n\nExamples:"
+    echo -e "\tiplocation"
+    echo -e "\tiplocation 204.79.197.200"
+    echo -e "\tiplocation -x localhost:9050"
+    echo -e "\tiplocation -x localhost:9050 204.79.197.200"
+    echo -e "\tiplocation -d ',' -n -o ip,country"
+    echo -e "\tiplocation --delimiter ',' --no-header --output ip,country"
+    echo -e "\tiplocation --delimiter ',' --no-header --output ip,country 204.79.197.200"
 }
 
 function iplocation_check_requirements {
@@ -33,7 +43,7 @@ function iplocation_parse_arguments {
     while [ $# -gt 0 ]
     do
         case "$1" in
-            -h|--help) iplocation_usage; return ;;
+            -h|--help) iplocation_usage; return 1 ;;
             -x|--proxy) PROXY_ADDRESS="$2"; shift ;;
             -o|--output) OUTPUT="$2"; shift ;;
             -d|--delimiter) DELIMITER="$2"; shift ;;
