@@ -47,15 +47,18 @@ function iplocation_parse_arguments {
 
 function iplocation_lookup_address {
     # If no address was given, lookup user's public address
-    if [ "$ADDRESS" = "" ] && ! ADDRESS="$(curl -s -x "$PROXY_ADDRESS" ifconfig.me/ip)"
+    if [ -z "$ADDRESS" ]
     then
-        echo "$(tput setaf 1)failed to lookup address$(tput sgr0)"
-        return 5
+        if ! ADDRESS="$(curl -s "${PROXY_ADDRESS:+-x}" "${PROXY_ADDRESS}" ifconfig.me/ip)"
+        then
+            echo "$(tput setaf 1)failed to lookup address$(tput sgr0)"
+            return 5
+        fi
     fi
 }
 
 function iplocation_locate_address {
-    if ! JSON_OBJECT="$(curl -s -x "$PROXY_ADDRESS" "https://api.iplocation.net/?ip=$ADDRESS")"
+    if ! JSON_OBJECT="$(curl -s "${PROXY_ADDRESS:+-x}" "$PROXY_ADDRESS" "https://api.iplocation.net/?ip=$ADDRESS")"
     then
         echo "$(tput setaf 1)failed to locate address$(tput sgr0)"
         return 6
