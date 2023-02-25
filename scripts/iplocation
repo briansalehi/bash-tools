@@ -49,7 +49,7 @@ function iplocation_parse_arguments {
             -d|--delimiter) DELIMITER="$2"; shift ;;
             -n|--no-header) HEADLESS=1 ;;
             --) ;; # ignore
-            *) ADDRESS="$1"; shift ;;
+            *) ADDRESS="$1" ;;
         esac
         shift
     done
@@ -122,12 +122,10 @@ function iplocation_print_results {
     done
 }
 
-function iplocation() {
-    # Sequencially follow execution of defined functions
-    iplocation_check_requirements   || return
-    iplocation_prepare_autocomplete || return
-    iplocation_parse_arguments "$@" || return
-    iplocation_lookup_address       || return
-    iplocation_locate_address       || return
-    iplocation_print_results        || return
-}
+# Sequencially follow execution of defined functions
+iplocation_check_requirements   || exit
+iplocation_prepare_autocomplete || exit
+iplocation_parse_arguments "$@" || exit
+iplocation_lookup_address       || exit
+iplocation_locate_address       || exit
+iplocation_print_results        || exit
