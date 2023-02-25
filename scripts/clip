@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 function clip() {
-    # Copy content to clipboard as is.
-    # When argument given, will be read as file.
-    # When no arguments found, read from standard input.
+    # Copy content to clipboard as is, without a trailing newline.
+    # When an argument is given, it will be read as file and its content will be copied to clipboard.
+    # When no arguments given, read from standard input.
     if ! command -v xclip &>/dev/null
     then
-        echo "$(tput setaf 1)xclip is not installed$(tput sgr0)" >&2
+        echo -e "\033[1;31m""xclip is not installed""\033[0m" >&2
         exit 1
     elif [ $# -eq 0 ] 
     then
@@ -17,3 +17,5 @@ function clip() {
         xclip -sel clip < "$1"
     fi
 }
+
+clip $@

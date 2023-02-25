@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 
-function genesis_encode_uri()
+function genesis()
 {
     local keyword="$1"
     local encoded
     local character
     local occurence
+    local uri
+    local filters
+    local index
+
+    [ -z "${keyword}" ] && echo "usage: ${0##*/} <query string>" && exit 1
 
     for index in $(seq 0 $((${#keyword} - 1)) )
     do
@@ -19,27 +24,11 @@ function genesis_encode_uri()
         encoded="${encoded}${occurence}"
     done
 
-    echo "${encoded}"
-}
-
-function genesis_generate_uri()
-{
-    local keyword
-    local uri
-    local filters
-
-    keyword="$(genesis_encode_uri "$1")"
-    uri="http://libgen.is/search.php?req=${keyword}"
     filters="res=100&phrase=1&view=detailed&column=def&sort=year&sortmode=DESC"
-
-    echo "${uri}&${filters}"
-}
-
-function genesis()
-{
-    # user should give at least one word in order to attemp a query
-    [ $# -eq 0 ] && echo "usage: ${0##*/} <query string>" && exit 1
+    uri="http://libgen.is/search.php?req=${encoded}&${filters}"
 
     # automatically open link by user's default browser
-    xdg-open "$(genesis_generate_uri "$*")"
+    xdg-open "${uri}"
 }
+
+genesis "$*"

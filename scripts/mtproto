@@ -162,3 +162,5 @@ function mtproto() {
 
     mtproto_print_results "$match_limit"
 }
+
+mtproto $@
