@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+list="$1"
+
+if [ $# -ne 1 ]
+then
+    echo -e "Usage: $(basename "$0") <list file>" >&2
+    exit 1
+elif ! command -v wget >/dev/null
+then
+    echo -e "wget not installed" >&2
+    exit 2
+elif test -z "${list}"
+then
+    echo -e "List file not given as first argument" >&2
+    exit 3
+fi
+
+while read -r record
+do
+    link="${record%% *}"
+    filename="${record#* }"
+
+    wget -c "${link}" -O "${filename}"
+done < $list
