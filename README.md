@@ -24,6 +24,7 @@ And now you can probe commands like `ctemp`, `cdir /tmp/somewhere`.
 * **mtproto**: Retrieve MTProto Telegram proxy
 * **includepath**: Inclusion function to add `<target>/bin` to `PATH` and `<target>/lib` to `LD_LIBRARY_PATH`.
 * **genesis**: Book query tool
+* **zget**: Complementing `wget` utility to download a list of files with custom name
 
 ## Collaboration
 
