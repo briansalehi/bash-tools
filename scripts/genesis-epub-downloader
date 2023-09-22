@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+function genesis_epub_downloader()
+{
+    local keyword="$1"
+    local encoded
+    local character
+    local occurence
+    local uri
+    local filters
+    local index
+    local html_page
+
+    [ -z "${keyword}" ] && echo "usage: ${0##*/} <query string>" && exit 1
+
+    for index in $(seq 0 $((${#keyword} - 1)) )
+    do
+        character=${keyword:$index:1}
+
+        case "${character}" in
+            [-_.~a-zA-Z0-9]) occurence="${character}" ;;
+            *) occurence=$(printf '%%%02x' "'${character}") ;;
+        esac
+
+        encoded="${encoded}${occurence}"
+    done
+
+    filters="res=100&phrase=1&view=detailed&column=def&sort=year&sortmode=DESC"
+    uri="http://libgen.is/search.php?req=${encoded}&${filters}"
+
+    html_page="$(mktemp)"
+
+    curl -s -L "$uri" > "$html_page"
+    line="$(grep -n '<td>epub</td>' "$html_page" | head -n1 | cut -d':' -f1)"
+
+    if [ -z "$line" ]
+    then
+        return 1
+    fi
+
+    uri="$(sed -n "$((line-50)),${line}s|.*href=\"\(/get[^\"]\+\).*|http://libgen.is\1|p" "$html_page" | grep '/get')"
+    uri="$(curl -s -L "$uri" | grep 'https://cloudflare-ipfs.com' | cut -d'"' -f2)"
+
+    echo "$uri"
+    return 0
+}
+
+genesis_epub_downloader "$*"
