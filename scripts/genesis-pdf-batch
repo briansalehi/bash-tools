@@ -7,7 +7,7 @@ function genesis_pdf_batch()
     local title
     local link
 
-    for filepath in "$1"/*.pdf
+    for filepath in "$1"/*.epub
     do
         filename="$(basename "$filepath")"
         filename="${filename%.*}"
