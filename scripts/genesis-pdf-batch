@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-function genesis_epub_batch()
+function genesis_pdf_batch()
 {
     local filepath
     local filename
@@ -13,9 +13,9 @@ function genesis_epub_batch()
         filename="${filename%.*}"
         title="$(basename "$filepath" | sed -n 's/ - .*//p')"
 
-        for link in $(genesis-epub-downloader "${title:-$filename}")
+        for link in $(genesis-pdf-downloader "${title:-$filename}")
         do
-            if wget -c "$link" -O "${filepath%.*}.epub"
+            if wget -c "$link" -O "${filepath%.*}.pdf"
             then
                 rm "$filepath"
                 break
@@ -24,4 +24,4 @@ function genesis_epub_batch()
     done
 }
 
-genesis_epub_batch "$1"
+genesis_pdf_batch "$1"

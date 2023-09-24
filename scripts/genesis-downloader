@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+function genesis_downloader()
+{
+    local format="$1"
+    local keyword="$2"
+    local encoded
+    local character
+    local occurence
+    local uri
+    local filters
+    local index
+    local html_page
+
+    [ -z "${keyword}" ] && echo "usage: ${0##*/} <query string>" && exit 1
+
+    for index in $(seq 0 $((${#keyword} - 1)) )
+    do
+        character=${keyword:$index:1}
+
+        case "${character}" in
+            [-_.~a-zA-Z0-9]) occurence="${character}" ;;
+            *) occurence=$(printf '%%%02x' "'${character}") ;;
+        esac
+
+        encoded="${encoded}${occurence}"
+    done
+
+    filters="res=100&phrase=1&view=detailed&column=def&sort=year&sortmode=DESC"
+    uri="http://libgen.is/search.php?req=${encoded}&${filters}"
+
+    html_page="$(mktemp)"
+
+    curl -s -L "$uri" > "$html_page"
+
+    local links=()
+    while read -r line
+    do
+        if [ -z "$line" ]
+        then
+            break
+        fi
+
+        uri="$(sed -n "$((line - 50)),${line}s|.*href=\"\(/get[^\"]\+\).*|http://libgen.is\1|p" "$html_page" | grep '/get')"
+        echo "$uri" >&2
+        links+=("$(curl -s -L "$uri" | grep 'http://.*\.onion/' | cut -d'"' -f2)")
+    done <<< "$(grep -n "<td>$format</td>" "$html_page" | cut -d':' -f1)"
+
+    local link
+    for link in "${link[@]}"
+    do
+        echo "$link"
+    done
+}
+
+genesis_downloader "$1" "$2"
