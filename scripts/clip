@@ -11,11 +11,14 @@ function clip() {
     elif [ $# -eq 0 ] 
     then
         # read from standard input
-        xclip -sel clip < /dev/stdin
-    else
+        xclip -select clipboard < /dev/stdin
+    elif [ -f "$1" ]
+    then
         # read from given file
-        xclip -sel clip < "$1"
+        xclip -select clipboard < "$1"
+    else
+        echo -n "$1" | xclip -select clipboard
     fi
 }
 
-clip $@
+clip "$@"
