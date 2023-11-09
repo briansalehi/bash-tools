@@ -5,19 +5,15 @@
 function ctemp() {
     case "$1" in
         -f|--file)
-            if [ "$EDITOR" == "" ]
+            if [ -n "$EDITOR" ] && command -v "$EDITOR" >/dev/null
             then
-                echo "EDITOR not set"
-            else
                 $EDITOR "$(mktemp)"
-            fi
-            ;;
-        -h|--help)
-            echo -e "Usage:\n\t$(basename "$0") [-f,--file] [-h,--help]"
-            ;;
-        *)
-            pushd "$(mktemp -d)" >/dev/null || exit 1
-            ;;
+            else
+                echo -e "\033[31;1mEDITOR not set properly.\033[0m"
+            fi ;;
+        -h|--help) echo -e "Usage:\n\t$(basename "$0") [-f,--file] [<dirname>] [-h,--help]" ;;
+        '') pushd "$(mktemp -d)" >/dev/null || return 1 ;;
+        *) mkdir -p "/tmp/$1"; pushd "/tmp/$1" >/dev/null || return 1 ;;
     esac
 }
 
