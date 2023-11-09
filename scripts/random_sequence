@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+random_sequence() {
+    local max="${1:-1}"
+    local random
+    local index
+    local -a sequence
+
+    for index in $(seq 1 "$max")
+    do
+        random="$((RANDOM % max))"
+        while grep -wq "$random" <<< "${sequence[*]}"
+        do
+            random="$((RANDOM % max))"
+        done
+        sequence["$index"]="$random"
+    done
+
+    echo "${sequence[*]}"
+}
