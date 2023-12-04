@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# Copy and paste this function into your script
+
+generic_select() {
+    local title="$1"; shift
+    local index=0
+    local option_index
+    local -a options
+
+    while [ $# -gt 0 ]; do options+=("$1"); shift; done
+
+    while [ $index -lt ${#options[*]} ]
+    do
+        echo -e "$((index + 1))) ${options[$index]}" >&2
+        index=$((index + 1))
+    done
+
+    while ! is_numeric "$option_index" || ! is_in_range "$option_index" 1 "${#options[*]}"
+    do
+        echo -ne "${title}\e[0m>> " >&2
+        read -r option_index
+    done
+
+    echo -e "${options[$((option_index - 1))]}"
+}
