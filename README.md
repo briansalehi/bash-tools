@@ -26,6 +26,7 @@ And now you can probe commands like `ctemp`, `cdir /tmp/somewhere`.
 * **includepath**: Inclusion function to add `<target>/bin` to `PATH` and `<target>/lib` to `LD_LIBRARY_PATH`.
 * **genesis**: Book query tool
 * **zget**: Complementing `wget` utility to download a list of files with custom name
+* **dusage**: List of storage usage by files
 
 ## Collaboration
 
