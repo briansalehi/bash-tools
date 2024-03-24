@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 dusage()
 {
     du -h -d1 "$1" 2>/dev/null | sort -hr | less
