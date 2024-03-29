@@ -1,0 +1,18 @@
+function include_lib
+{
+    while [ $# -gt 0 ]
+    do
+        grep -qv "$(readlink -f "${1}")" <<< "${LD_LIBRARY_PATH}" && export LD_LIBRARY_PATH="$(readlink -f "${1}")${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+        shift
+    done
+}
+
+function include_link_lib
+{
+    while [ $# -gt 0 ]
+    do
+        grep -qv "${1}" <<< "${LD_LIBRARY_PATH}" && export LD_LIBRARY_PATH="${1}${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+        shift
+    done
+}
+
