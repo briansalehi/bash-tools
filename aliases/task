@@ -1,23 +1,28 @@
 #!/usr/bin/env bash
 
 # Backend aliases required by API
-vbar()   { echo -n -;  sleep 0.1; echo -ne '\b'; bbar;                        }
-sbar()   { echo -n /;  sleep 0.1; echo -ne '\b'; vbar;                        }
-bbar()   { echo -n \\; sleep 0.1; echo -ne '\b'; hbar;                        }
-hbar()   { echo -n \|; sleep 0.1; echo -ne '\b'; sbar;                        }
-bar()    { tput civis; while true; do vbar; done;                             }
-load()   { bar & lpid=$!;                                                     }
-unload() { tput cnorm; kill "$lpid" &>>/tmp/task && echo -ne '\b';            }
-sigint() { tput cnorm; error "\nUser interrupted";                            }
-report() { echo "Please report any defects to <briansalehi@proton.me>";       }
-error()  { echo -e  "\e[1;31m$1\e[0m"; cat /tmp/task; report; exit 1;         }
-step()   { echo -n  "$1 "; load; trap "sigint" INT;                           }
-check()  { unload; echo -e  "\e[1;32m\u2713\e[0m ";                           }
-failed() { unload; echo -ne "\e[1;31m\u2717\e[0m "; return 1;                 }
-warn()   { echo -e  "\e[1;31m$1\e[0m"; return 1;                              }
-skip()   { echo -e  "\e[1;33m$1\e[0m"; return 1;                              }
+btools_vbar()   { echo -n -;  sleep 0.1; echo -ne '\b'; btools_bbar;            }
+btools_sbar()   { echo -n /;  sleep 0.1; echo -ne '\b'; btools_vbar;            }
+btools_bbar()   { echo -n \\; sleep 0.1; echo -ne '\b'; btools_hbar;            }
+btools_hbar()   { echo -n \|; sleep 0.1; echo -ne '\b'; btools_sbar;            }
+btools_bar()    { tput civis; while true; do btools_vbar; done;                 }
+btools_load()   { btools_bar & btools_lpid=$!;                                  }
+btools_unload() { tput cnorm; kill "$btools_lpid" &>/tmp/task && echo -ne '\b'; }
+btools_sigint() { btools_exit "\n\u2717 User interrupted"; return 1;            }
+btools_report() { echo "Please report defects to <briansalehi@proton.me>";      }
+btools_defect() { cat /tmp/task; btools_report;                                 }
+btools_exit()   { btools_unload; echo -e "\e[1;31m$1\e[0m"; btools_defect;      }
+btools_rewind() { btools_unload; echo -ne "\e[1;31m\u2717\e[0m "; return 1;     }
+btools_check()  { btools_unload; echo -e  "\e[1;32m\u2713\e[0m ";               }
+btools_failed() { [ $? -eq 130 ] && return 0; btools_rewind; return 1;          }
+btools_wait()   { btools_step "$1"; wait $btools_tpid || return $?;             }
+btools_start()  { eval "$2" &>/tmp/task & btools_tpid=$!; btools_wait "$1";     }
+btools_step()   { echo -n  "$1 "; btools_load; trap 'btools_sigint' INT;        }
+btools_error()  { echo -e "\e[1;31m$1\e[0m"; btools_defect; return 1;           }
+btools_warn()   { echo -e  "\e[1;31m$1\e[0m"; return 1;                         }
+btools_skip()   { echo -e  "\e[1;33m$1\e[0m"; return 1;                         }
 
 # Use APIs
-task()   { step "$1"; eval  $2 &>>/tmp/task || failed || error "$3" ;  check; }
-try()    { step "$1"; (eval $2 &>>/tmp/task || failed || warn "$3") && check; }
-option() { step "$1"; (eval $2 &>>/tmp/task || failed || skip "$3") && check; }
+task()   { if btools_start "$1" "$2"; then btools_check; else btools_failed || btools_error "$3"; fi; }
+try()    { if btools_start "$1" "$2"; then btools_check; else btools_failed || btools_warn  "$3"; fi; }
+option() { if btools_start "$1" "$2"; then btools_check; else btools_failed || btools_skip  "$3"; fi; }
