@@ -11,14 +11,14 @@ error() { echo -e "\e[1;31m$1\e[0m"; exit 1; }
 
 case "$(uname -m)" in
     x86_64)
-        [ "$distro" == "ubuntu" ] || error "Incompatible distro ${distro}"
+        [ "$distro" == "ubuntu" ] || error "Incompatible distro: ${distro}"
         build="x86_64-linux-gnu-${distro}-${release}" ;;
     aarch64)
         build="aarch64-linux-gnu" ;;
     armv7a)
         build="armv7a-linux-gnueabihf" ;;
     *)
-        error "Incompatible machine ${machine}" ;;
+        error "Incompatible machine: ${machine}" ;;
 esac
 
 [ -d ${source_path} ] || mkdir -p ${source_path} || error "Cannot create ${source_path}"

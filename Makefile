@@ -4,10 +4,19 @@ scripts := $(subst scripts/,,$(wildcard scripts/*))
 aliases := $(subst aliases/,,$(wildcard aliases/*))
 
 help:
-	@echo "Possible choices are:"
-	@echo -e "\e[1;33m" # colorize items
+	@tput setaf 2
+	@tput bold
+	@echo "Available targets:"
+	@echo
+	@tput setaf 3
 	@echo all $(scripts) $(aliases) | tr ' ' '\n' | nl | tr -s ' ' | tr '\t' ' ' | column
-	@echo -e "\e[0m" # reset coloring
+	@tput sgr0
+	@echo
+	@tput setaf 6
+	@tput bold
+	@echo "make <target>"
+	@tput sgr0
+	@echo
 
 all: $(scripts) $(aliases) script_notice alias_notice
 
@@ -20,16 +29,24 @@ $(aliases): alias_notice
 	cp aliases/$@ $(HOME)/.bash_tools
 
 script_notice:
-	@echo -e "\033[1;33mUse 'aliases/include_path' utility to add '$$HOME/.local/bin' to your PATH:"
-	@echo -e "\033[1;35m"
-	@echo -e "\t"'include_path $$HOME/.local/bin'
-	@echo -e "\033[0m"
+	@tput setaf 3
+	@tput bold
+	@echo 'Use `include_path` utility to add `$$HOME/.local/bin` to your PATH:'
+	@echo
+	@tput setaf 6
+	@echo 'include_path $$HOME/.local/bin'
+	@tput sgr0
+	@echo
 
 alias_notice:
-	@echo -e "\033[1;33mAdd following line in your '$$HOME/.bashrc' file:"
-	@echo -e "\033[1;35m"
-	@echo -e "\t"'for tool in $$HOME/.bash_tools/*; do source $$tool; done'
-	@echo -e "\033[0m"
+	@tput setaf 3
+	@tput bold
+	@echo 'Add following line in your `$$HOME/.bashrc` file:'
+	@echo
+	@tput setaf 6
+	@echo 'for tool in $$HOME/.bash_tools/*; do source $$tool; done'
+	@tput sgr0
+	@echo
 
 test:
 	shellcheck $(wildcard scripts/*) $(wildcard aliases/*)
