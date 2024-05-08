@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+prefix_path="${prefix_path:-$HOME/.local}"
+source_path="$prefix_path/src"
+
+machine="$(uname -m)"
+distro="$(awk '{FS="="} $1=="ID" {print $2}' /etc/os-release | tr -d '"')"
+release="$(awk '{FS="="} $1=="VERSION_ID" {print $2}' /etc/os-release | tr -d '"')"
+
+error() { echo -e "\e[1;31m$1\e[0m"; exit 1; }
+
+case "$(uname -m)" in
+    x86_64)
+        [ "$distro" == "ubuntu" ] || error "Incompatible distro ${distro}"
+        build="x86_64-linux-gnu-${distro}-${release}" ;;
+    aarch64)
+        build="aarch64-linux-gnu" ;;
+    armv7a)
+        build="armv7a-linux-gnueabihf" ;;
+    *)
+        error "Incompatible machine ${machine}" ;;
+esac
+
+[ -d ${source_path} ] || mkdir -p ${source_path} || error "Cannot create ${source_path}"
+
+cd ${source_path} || error "Cannot move to ${source_path}"
+
+if [ -d ${source_path}/llvm-project ]
+then
+    echo -e "\e[1;33mUpdating repository\e[0m"
+    cd llvm-project || error "${source_path}/llvm-project directory does not exist"
+    git checkout main
+    git pull
+else
+    echo -e "\e[1;33mCloning repository\e[0m"
+    git clone https://github.com/llvm/llvm-project.git || error "Cloning failed"
+    cd llvm-project || error "${source_path}/llvm-project directory does not exist"
+fi
+
+# all available versions
+read -a versions <<< $(git tag | grep "^llvmorg-[0-9]\+.[0-9]\+.[0-9]\+$" | sort -t '-' -k 2 -n -r | cut -d'-' -f2 | xargs)
+
+cd ${source_path}
+
+index=0
+version="${versions[$index]}"
+archive="clang+llvm-${version}-${build}.tar.xz"
+unarchived="${archive%.tar.xz*}"
+
+# download and extract archive, downgrade version repeatedly until compatible binary found
+echo -e "\e[1;33mDownloading archive\e[0m"
+while ! [ -f "$archive" ]
+do
+    if ! wget -c -q --show-progress https://github.com/llvm/llvm-project/releases/download/llvmorg-${version}/clang+llvm-${version}-${build}.tar.xz
+    then
+        echo -ne "\e[1;31mVersion ${version} does not have a compatible binary for $(uname -m), "
+        index=$((index + 1))
+        version="${versions[$index]}"
+        archive="clang+llvm-${version}-${build}.tar.xz"
+        unarchived="${archive%.tar.xz*}"
+
+        if [ $index -eq ${#versions[*]} ]
+        then
+            echo -e "no compatible binary found."
+        else
+            echo -e "downgrading version to ${version}\e[0m"
+        fi
+    fi
+
+    [ -f "$archive" ] && echo -e "\e[1;33mArchive ${version} already downloaded\e[0m"
+done
+
+if [ -d "${unarchived}" ]
+then
+    echo -e "\e[1;33mArchive ${version} already extracted\e[0m"
+else
+    echo -e "\e[1;33mExtracting ${version} archive\e[0m"
+    tar -xJf "${archive}" || error "Extracting ${source_path}/${unarchived} failed"
+fi
+
+echo -e "\e[1;32mMake executables visible by updating your PATH:\e[0m"
+echo -e "\n\t\e[2;38minclude_path ${source_path/$HOME/\$HOME}/${unarchived}/bin\e[0m\n"
