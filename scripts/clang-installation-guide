@@ -7,7 +7,10 @@ machine="$(uname -m)"
 distro="$(awk '{FS="="} $1=="ID" {print $2}' /etc/os-release | tr -d '"')"
 release="$(awk '{FS="="} $1=="VERSION_ID" {print $2}' /etc/os-release | tr -d '"')"
 
-error() { echo -e "\e[1;31m$1\e[0m"; exit 1; }
+error()   { tput bold; tput setaf 1; echo $@; tput sgr0; exit 1; }
+notice()  { tput bold; tput setaf 3; echo $@; tput sgr0; }
+success() { tput bold; tput setaf 2; echo $@; tput sgr0; }
+code()    { tput dim; tput setaf 8; echo -e "\n\t$@\n"; tput sgr0; }
 
 case "$(uname -m)" in
     x86_64)
@@ -27,12 +30,12 @@ cd ${source_path} || error "Cannot move to ${source_path}"
 
 if [ -d ${source_path}/llvm-project ]
 then
-    echo -e "\e[1;33mUpdating repository\e[0m"
+    notice "Updating repository"
     cd llvm-project || error "${source_path}/llvm-project directory does not exist"
-    git checkout main
-    git pull
+    git checkout main &>/dev/null
+    git pull | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)'
 else
-    echo -e "\e[1;33mCloning repository\e[0m"
+    notice "Cloning repository"
     git clone https://github.com/llvm/llvm-project.git || error "Cloning failed"
     cd llvm-project || error "${source_path}/llvm-project directory does not exist"
 fi
@@ -48,7 +51,7 @@ archive="clang+llvm-${version}-${build}.tar.xz"
 unarchived="${archive%.tar.xz*}"
 
 # download and extract archive, downgrade version repeatedly until compatible binary found
-echo -e "\e[1;33mDownloading archive\e[0m"
+notice "Downloading archive"
 while ! [ -f "$archive" ]
 do
     if ! wget -c -q --show-progress https://github.com/llvm/llvm-project/releases/download/llvmorg-${version}/clang+llvm-${version}-${build}.tar.xz
@@ -61,22 +64,22 @@ do
 
         if [ $index -eq ${#versions[*]} ]
         then
-            echo -e "no compatible binary found."
+            echo -e "no compatible binary found.\e[0m"
         else
             echo -e "downgrading version to ${version}\e[0m"
         fi
     fi
 
-    [ -f "$archive" ] && echo -e "\e[1;33mArchive ${version} already downloaded\e[0m"
+    [ -f "$archive" ] && notice "Archive ${version} already downloaded"
 done
 
 if [ -d "${unarchived}" ]
 then
-    echo -e "\e[1;33mArchive ${version} already extracted\e[0m"
+    notice "Archive ${version} already extracted"
 else
-    echo -e "\e[1;33mExtracting ${version} archive\e[0m"
+    notice "Extracting ${version} archive"
     tar -xJf "${archive}" || error "Extracting ${source_path}/${unarchived} failed"
 fi
 
-echo -e "\e[1;32mMake executables visible by updating your PATH:\e[0m"
-echo -e "\n\t\e[2;38minclude_path ${source_path/$HOME/\$HOME}/${unarchived}/bin\e[0m\n"
+success "Make executables visible by updating your PATH:"
+code "include_path ${source_path/$HOME/\$HOME}/${unarchived}/bin"

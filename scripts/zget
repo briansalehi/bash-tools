@@ -18,8 +18,8 @@ fi
 
 while read -r record
 do
-    link="${record%% *}"
-    filename="${record#* }"
+    link="$(awk '{print $1}' <<< "$record")"
+    filename="$(awk '{print $2}' <<< "$record")"
 
     wget -L -c "${link}" "${filename:+-O}" "${filename}"
 done < ${list}
