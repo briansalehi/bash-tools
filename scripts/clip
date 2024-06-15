@@ -6,12 +6,15 @@ function clip() {
     # When no arguments given, read from standard input.
     if ! command -v xclip &>/dev/null
     then
-        echo -e "\033[1;31m""xclip is not installed""\033[0m" >&2
+        tput setaf 1
+        tput bold
+        echo "xclip is not installed" >&2
+        tput sgr0
         exit 1
-    elif [ $# -eq 0 ] 
+    elif [ $# -eq 0 ]
     then
         # read from standard input
-        xclip -select clipboard < /dev/stdin
+        cat /dev/stdin | tr -d '\n' | xclip -select clipboard
     elif [ -f "$1" ]
     then
         # read from given file
