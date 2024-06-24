@@ -24,6 +24,20 @@ $(scripts): script_notice
 	mkdir --parents $(HOME)/.local/bin
 	cp scripts/$@ $(HOME)/.local/bin
 
+cmake-maintenance: script_notice
+	mkdir --parents $(HOME)/.local/bin
+	mkdir --parents $(HOME)/.config/systemd/user
+	cp services/$@ $(HOME)/.local/bin
+	cp systemd/cmake-maintenance.timer $(HOME)/.config/systemd/user/
+	cp systemd/cmake-maintenance.service $(HOME)/.config/systemd/user/
+
+node-maintenance: script_notice
+	mkdir --parents $(HOME)/.local/bin
+	mkdir --parents $(HOME)/.config/systemd/user
+	cp services/$@ $(HOME)/.local/bin
+	cp systemd/node-maintenance.timer $(HOME)/.config/systemd/user/
+	cp systemd/node-maintenance.service $(HOME)/.config/systemd/user/
+
 $(aliases): alias_notice
 	mkdir --parents $(HOME)/.bash_tools
 	cp aliases/$@ $(HOME)/.bash_tools
