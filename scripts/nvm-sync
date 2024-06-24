@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+if [ ! -d "$HOME/.nvm" ] || [ ! -s "$HOME/.nvm/nvm.sh" ]
+then
+    echo "nvm not installed" >&2
+    exit 1
+fi
+
+source "$HOME/.nvm/nvm.sh"
+
+current_version="$(nvm version)"
+latest_version="$(nvm version-remote)"
+
+set -x
+if [ "${current_version}" != "${latest_version}" ]
+then
+    set +x
+    nvm install-latest-npm
+    nvm install "${latest_version}"
+    nvm use "${latest_version}"
+fi
