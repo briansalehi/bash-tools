@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+prefix_path="${PREFIX_PATH:-$HOME/.local}"
+source_path="$prefix_path/src"
+
+machine="$(uname -m)"
+os="$(uname -s)"
+os="${os,,}"
+distro="$(awk '{FS="="} $1=="ID" {print $2}' /etc/os-release | tr -d '"')"
+release="$(awk '{FS="="} $1=="VERSION_ID" {print $2}' /etc/os-release | tr -d '"')"
+
+error()   { tput bold; tput setaf 1; echo $@; tput sgr0; exit 1; }
+notice()  { tput bold; tput setaf 3; echo $@; tput sgr0; }
+success() { tput bold; tput setaf 2; echo $@; tput sgr0; }
+code()    { tput dim; tput setaf 8; echo -e "\n\t$@\n"; tput sgr0; }
+
+[ -d ${source_path} ] || mkdir -p ${source_path} || error "Cannot create ${source_path}"
+
+cd ${source_path} || error "Cannot move to ${source_path}"
+
+if [ -d ${source_path}/cmake ]
+then
+    notice "Cleaning repository"
+    cd cmake || error "Failed to move into ${source_path}/cmake directory"
+    git status | sed -n '/^Untracked files:$/,/^$/{1,3d;p}' | xargs rm -rf
+
+    notice "Updating repository"
+    git checkout master &>/dev/null
+    git pull --prune --tags origin | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)'
+else
+    notice "Cloning repository"
+    git clone https://github.com/kitware/cmake.git || error "Cloning failed"
+    cd cmake || error "${source_path}/cmake directory does not exist"
+fi
+
+# all available versions
+notice "Fetching version list"
+read -a versions <<< $(git tag --sort version:refname | grep -E 'v[0-9.]+$' | tac | xargs)
+
+index=0
+current_version=
+latest_version="${versions[$index]}"
+
+if [ -x "${prefix_path}/bin/cmake" ]
+then
+    current_version="v$(${prefix_path}/bin/cmake --version | grep -Eo '([0-9]{1,}\.?){3}')"
+
+    if [ "${current_version}" == "${latest_version}" ]
+    then
+        success "Already using latest version ${latest_version}"
+        exit 0
+    fi
+fi
+
+notice "Switch to latest version ${latest_version}"
+git checkout "${latest_version}" || error "Failed to checkout latest version"
+notice "Bootstraping"
+./bootstrap --prefix="${prefix_path}" || error "Bootstraping failed"
+notice "Configuring"
+./configure --prefix="${prefix_path}" || error "Configuring failed"
+notice "Building"
+make -j$(($(nproc) / 2 + 1)) || error "Building failed"
+notice "Installing"
+make install || error "Installation failed"
+
+success "Make executables visible by updating your PATH:"
+code "include_path ${source_path/$HOME/\$HOME}/.local/bin"
