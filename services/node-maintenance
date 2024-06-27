@@ -11,11 +11,10 @@ source "$HOME/.nvm/nvm.sh"
 current_version="$(nvm version)"
 latest_version="$(nvm version-remote)"
 
-set -x
 if [ "${current_version}" != "${latest_version}" ]
 then
-    set +x
     nvm install-latest-npm
     nvm install "${latest_version}"
-    nvm use "${latest_version}"
 fi
+
+nvm use "${latest_version}"
