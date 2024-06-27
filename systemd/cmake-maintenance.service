@@ -5,4 +5,4 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=$HOME/.local/bin/cmake-maintenance
+ExecStart=%h/.local/bin/cmake-maintenance
