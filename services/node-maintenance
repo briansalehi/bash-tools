@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 error() { tput setaf 1; tput bold; echo "$@" >&2; tput sgr0; exit 1; }
+success() { tput bold; tput setaf 2; echo $@; tput sgr0; exit 0; }
 
 if [ ! -d "$HOME/.nvm" ] || [ ! -s "$HOME/.nvm/nvm.sh" ]
 then
@@ -14,7 +15,7 @@ latest_version="$(nvm version-remote)"
 
 if [ "${current_version}" == "${latest_version}" ]
 then
-    error "Already on latest version"
+    success "Already on latest version"
 fi
 
 nvm install-latest-npm || error "Failed to install latest npm"
