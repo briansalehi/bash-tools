@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+error()   { echo $@; exit 1; }
+notice()  { echo $@; }
+success() { echo $@; }
+code()    { echo -e "\n\t$@\n"; }
+
+if command -v plantuml >/dev/null
+then
+    current_version="v$(plantuml -v 2>&1 | grep -oE '([0-9.]+){2}\.[0-9]+')"
+else
+    notice "planutml is not installed"
+fi
+
+if version="$(curl -Ls https://github.com/plantuml/plantuml/releases/latest | sed -n 's/\s*<h1\s.*>\(v\?\([0-9.]\+\)\{3\}\)<.h1>\s*/\1/p')"
+then
+    [ "$current_version" == "$version" ] && success "plantuml already on latest version $version" && exit 0
+else
+    error "failed to get version list"
+fi
+
+if ! link="$(curl -Ls "https://github.com/plantuml/plantuml/releases/expanded_assets/${version}" | grep 'plantuml.jar' | awk 'BEGIN{FS="\""} {print $2}' | head -n1)"
+then
+    error "failed to retrieve download link"
+fi
+
+if wget -q "https://github.com/${link}" -O /usr/share/plantuml/plantuml.jar
+then
+    success "plantuml upgraded from '${current_version:-unknown}' to '$version'"
+else
+    error "failed to download version $version"
+fi

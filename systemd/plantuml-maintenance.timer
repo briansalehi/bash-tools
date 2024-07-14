@@ -1,0 +1,9 @@
+[Unit]
+Description=PlantUML Maintenance Routine
+
+[Timer]
+OnCalendar=Daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
