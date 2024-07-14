@@ -6,3 +6,6 @@ After=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/node-maintenance
+
+[Install]
+WantedBy=multi-user.target
