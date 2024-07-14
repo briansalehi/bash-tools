@@ -24,7 +24,7 @@ then
     error "failed to retrieve download link"
 fi
 
-if wget -q "https://github.com/${link}" -O /usr/share/plantuml/plantuml.jar
+if wget -q "https://github.com/${link}" -O "$(find /usr/share -type f -name plantuml.jar -quit -print)"
 then
     success "plantuml upgraded from '${current_version:-unknown}' to '$version'"
 else
