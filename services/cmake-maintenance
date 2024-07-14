@@ -9,10 +9,10 @@ os="${os,,}"
 distro="$(awk '{FS="="} $1=="ID" {print $2}' /etc/os-release | tr -d '"')"
 release="$(awk '{FS="="} $1=="VERSION_ID" {print $2}' /etc/os-release | tr -d '"')"
 
-error()   { tput bold; tput setaf 1; echo $@; tput sgr0; exit 1; }
-notice()  { tput bold; tput setaf 3; echo $@; tput sgr0; }
-success() { tput bold; tput setaf 2; echo $@; tput sgr0; }
-code()    { tput dim; tput setaf 8; echo -e "\n\t$@\n"; tput sgr0; }
+error()   { echo $@; exit 1; }
+notice()  { echo $@; }
+success() { echo $@; }
+code()    { echo -e "\n\t$@\n"; }
 
 [ -d ${source_path} ] || mkdir -p ${source_path} || error "Cannot create ${source_path}"
 

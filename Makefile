@@ -1,7 +1,8 @@
-.PHONY: help all remove test scripts script_notice
+.PHONY: help all remove test scripts aliases services script_notice service_notice
 
 scripts := $(subst scripts/,,$(wildcard scripts/*))
 aliases := $(subst aliases/,,$(wildcard aliases/*))
+services := $(subst services/,,$(wildcard services/*))
 
 help:
 	@tput setaf 2
@@ -9,7 +10,7 @@ help:
 	@echo "Available targets:"
 	@echo
 	@tput setaf 3
-	@echo all $(scripts) $(aliases) | tr ' ' '\n' | nl | tr -s ' ' | tr '\t' ' ' | column
+	@echo all $(scripts) $(aliases) $(services) | tr ' ' '\n' | nl | tr -s ' ' | tr '\t' ' ' | column
 	@tput sgr0
 	@echo
 	@tput setaf 6
@@ -18,25 +19,16 @@ help:
 	@tput sgr0
 	@echo
 
-all: $(scripts) $(aliases) script_notice alias_notice
+all: $(scripts) $(aliases) $(services) script_notice alias_notice
 
 $(scripts): script_notice
 	mkdir --parents $(HOME)/.local/bin
 	cp scripts/$@ $(HOME)/.local/bin
 
-cmake-maintenance: script_notice
-	mkdir --parents $(HOME)/.local/bin
-	mkdir --parents $(HOME)/.config/systemd/user
-	cp services/$@ $(HOME)/.local/bin
-	cp systemd/cmake-maintenance.timer $(HOME)/.config/systemd/user/
-	cp systemd/cmake-maintenance.service $(HOME)/.config/systemd/user/
-
-node-maintenance: script_notice
-	mkdir --parents $(HOME)/.local/bin
-	mkdir --parents $(HOME)/.config/systemd/user
-	cp services/$@ $(HOME)/.local/bin
-	cp systemd/node-maintenance.timer $(HOME)/.config/systemd/user/
-	cp systemd/node-maintenance.service $(HOME)/.config/systemd/user/
+$(services): service_notice
+	sudo cp services/$@ /usr/local/bin
+	sudo cp systemd/$@.timer /usr/lib/systemd/system/
+	sudo cp systemd/$@.service /usr/lib/systemd/system/
 
 $(aliases): alias_notice
 	mkdir --parents $(HOME)/.bash_tools
@@ -62,5 +54,16 @@ alias_notice:
 	@tput sgr0
 	@echo
 
+service_notice:
+	@tput setaf 3
+	@tput bold
+	@echo 'Reload systemd configuration and enable your services:'
+	@echo
+	@tput setaf 6
+	@echo 'sudo systemctl daemon-reload'
+	@echo 'sudo systemctl enable --now <service>'
+	@tput sgr0
+	@echo
+
 test:
-	shellcheck $(wildcard scripts/*) $(wildcard aliases/*)
+	shellcheck $(wildcard scripts/*) $(wildcard aliases/*) $(wildcard services/*)

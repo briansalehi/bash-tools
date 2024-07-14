@@ -5,4 +5,4 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=%h/.local/bin/node-maintenance
+ExecStart=/usr/local/bin/node-maintenance
