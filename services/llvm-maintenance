@@ -26,7 +26,7 @@ then
 
     notice "Updating repository"
     git checkout master &>/dev/null
-    git pull --prune --tags origin | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)'
+    git pull origin master --prune --tags origin | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)'
 else
     notice "Cloning repository"
     git clone https://github.com/llvm/llvm-project.git || error "Cloning failed"
