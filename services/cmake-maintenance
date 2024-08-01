@@ -73,4 +73,4 @@ notice "Installing"
 make install || error "Installation failed"
 
 success "Make executables visible by updating your PATH:"
-code "include_path ${source_path/$HOME/\$HOME}/.local/bin"
+code "include_path ${prefix_path/$HOME/\$HOME}/.local/bin"

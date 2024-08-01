@@ -68,4 +68,4 @@ notice "Installing"
 cmake --install build || error "Installation failed"
 
 success "Make executables visible by updating your PATH:"
-code "include_path ${source_path/$HOME/\$HOME}/.local/bin"
+code "include_path ${prefix_path/$HOME/\$HOME}/.local/bin"
