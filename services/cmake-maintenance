@@ -2,6 +2,7 @@
 
 prefix_path="${PREFIX_PATH:-$HOME/.local}"
 source_path="$prefix_path/src"
+preferred_version="${1}"
 
 machine="$(uname -m)"
 os="$(uname -s)"
@@ -37,22 +38,30 @@ fi
 notice "Fetching version list"
 read -a versions <<< $(git tag --sort version:refname | grep -E 'v[0-9.]+$' | tac | xargs)
 
-index=0
+if [ -n "$preferred_version" ]
+then
+    if grep -q "v$preferred_version" <<< "${versions[*]}"
+    then
+        latest_version="v$preferred_version"
+    fi
+else
+    latest_version="${versions[0]}"
+fi
+
 current_version=
-latest_version="${versions[$index]}"
 
 if [ -x "${prefix_path}/bin/cmake" ]
 then
-    current_version="v$(${prefix_path}/bin/cmake --version | grep -Eo '([0-9]{1,}\.?){3}')"
+    current_version="$(${prefix_path}/bin/cmake --version | grep -Eo '([0-9]{1,}\.?){3}')"
 
-    if [ "${current_version}" == "${latest_version}" ]
+    if [ "v${current_version}" == "${latest_version}" ]
     then
         success "Already using latest version ${latest_version}"
         exit 0
     fi
 fi
 
-notice "Switch to latest version ${latest_version}"
+notice "Switch version${current_version:+ from }${current_version} to ${latest_version}"
 git checkout "${latest_version}" || error "Failed to checkout latest version"
 notice "Bootstraping"
 ./bootstrap --prefix="${prefix_path}" || error "Bootstraping failed"
