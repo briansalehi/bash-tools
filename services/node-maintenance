@@ -5,7 +5,17 @@ success() { echo $@; exit 0; }
 
 if [ ! -d "$HOME/.nvm" ] || [ ! -s "$HOME/.nvm/nvm.sh" ]
 then
-    error "nvm not installed"
+    export NVM_DIR="$HOME/.nvm" && (
+        git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+        cd "$NVM_DIR"
+        git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)`
+    ) && \. "$NVM_DIR/nvm.sh" && success "nvm installed"
+else
+    (
+        cd "$NVM_DIR"
+        git fetch --tags origin
+        git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)`
+    ) && \. "$NVM_DIR/nvm.sh" && success "nvm updated"
 fi
 
 source "$HOME/.nvm/nvm.sh"
