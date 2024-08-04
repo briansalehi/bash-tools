@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 
 error() { echo "$@" >&2; exit 1; }
-success() { echo $@; exit 0; }
+success() { echo $@; }
 
-if [ ! -d "$HOME/.nvm" ] || [ ! -s "$HOME/.nvm/nvm.sh" ]
+export NVM_DIR="$HOME/.nvm"
+
+if [ -d "$NVM_DIR" ] && [ -d "$NVM_DIR/.git" ]
 then
-    export NVM_DIR="$HOME/.nvm" && (
-        git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR"
-        cd "$NVM_DIR"
-        git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)`
-    ) && \. "$NVM_DIR/nvm.sh" && success "nvm installed"
-else
+    [ -h "$NVM_DIR/nvm.sh" ] && [ ! -s "$NVM_DIR/nvm.sh" ] && unlink "$NVM_DIR/nvm.sh"
     (
         cd "$NVM_DIR"
         git fetch --tags origin
         git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)`
     ) && \. "$NVM_DIR/nvm.sh" && success "nvm updated"
+else
+    [ -d "$NVM_DIR" ] && rm -r "$NVM_DIR"
+    (
+        git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+        cd "$NVM_DIR"
+        git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)`
+    ) && \. "$NVM_DIR/nvm.sh" && success "nvm installed"
 fi
 
 source "$HOME/.nvm/nvm.sh"
@@ -25,7 +29,7 @@ latest_version="$(nvm version-remote)"
 
 if [ "${current_version}" == "${latest_version}" ]
 then
-    success "Already on latest version"
+    success "Already on latest version" && exit 0
 fi
 
 nvm install-latest-npm || error "Failed to install latest npm"
