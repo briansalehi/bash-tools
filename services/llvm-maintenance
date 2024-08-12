@@ -47,7 +47,7 @@ then
 
     if [ "${current_version}" == "${latest_version}" ]
     then
-        success "Already using latest version ${latest_version}"
+        success "${0%%-*} already using latest version ${latest_version}"
         exit 0
     fi
 fi
