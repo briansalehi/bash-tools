@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-error() { echo "$@" >&2; exit 1; }
-success() { echo $@; }
+error()   { echo "\033[1;31m$*\033[0m"; exit 1; }
+notice()  { echo "\033[1;35m$*\033[0m"; }
+success() { echo "\033[1;32m$*\033[0m"; }
+code()    { echo -e "\n\t$*\n"; }
 
 export NVM_DIR="$HOME/.nvm"
 
