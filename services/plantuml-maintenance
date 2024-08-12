@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-error()   { echo "\033[1;31m$*\033[0m"; exit 1; }
-notice()  { echo "\033[1;35m$*\033[0m"; }
-success() { echo "\033[1;32m$*\033[0m"; }
+error()   { echo -e "\033[1;31m$*\033[0m" >&2; exit 1; }
+notice()  { echo -e "\033[1;35m$*\033[0m"; }
+success() { echo -e "\033[1;32m$*\033[0m"; }
 code()    { echo -e "\n\t$*\n"; }
 
 if command -v plantuml >/dev/null
