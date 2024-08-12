@@ -31,7 +31,7 @@ latest_version="$(nvm version-remote)"
 
 if [ "${current_version}" == "${latest_version}" ]
 then
-    success "${0%%-*} already on latest version" && exit 0
+    success "$(basename "${0%%-*}") already on latest version" && exit 0
 fi
 
 nvm install-latest-npm || error "Failed to install latest npm"
