@@ -2,23 +2,18 @@
 
 prefix_path="${PREFIX_PATH:-$HOME/.local}"
 source_path="$prefix_path/src"
-
-machine="$(uname -m)"
-os="$(uname -s)"
-os="${os,,}"
-distro="$(awk '{FS="="} $1=="ID" {print $2}' /etc/os-release | tr -d '"')"
-release="$(awk '{FS="="} $1=="VERSION_ID" {print $2}' /etc/os-release | tr -d '"')"
+preferred_version="${1}"
 
 error()   { echo -e "\033[1;31m$*\033[0m" >&2; exit 1; }
 notice()  { echo -e "\033[1;35m$*\033[0m"; }
 success() { echo -e "\033[1;32m$*\033[0m"; }
 code()    { echo -e "\n\t$*\n"; }
 
-[ -d ${source_path} ] || mkdir -p ${source_path} || error "Cannot create ${source_path}"
+[ -d "${source_path}" ] || mkdir -p "${source_path}" || error "Cannot create ${source_path}"
 
-cd ${source_path} || error "Cannot move to ${source_path}"
+cd "${source_path}" || error "Cannot move to ${source_path}"
 
-if [ -d ${source_path}/llvm-project ]
+if [ -d "${source_path}/llvm-project" ]
 then
     notice "Cleaning repository"
     cd llvm-project || error "Failed to move into ${source_path}/llvm-project directory"
@@ -26,7 +21,7 @@ then
 
     notice "Updating repository"
     git checkout main &>/dev/null
-    git pull origin main --prune --tags origin | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)'
+    git pull origin --prune --tags | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)'
 else
     notice "Cloning repository"
     git clone https://github.com/llvm/llvm-project.git || error "Cloning failed"
@@ -35,15 +30,23 @@ fi
 
 # all available versions
 notice "Fetching version list"
-read -a versions <<< $(git tag --sort version:refname | grep -E 'llvmorg-[0-9.]+$' | tac | xargs)
+read -ra versions <<< "$(git tag --sort version:refname | grep -E 'llvmorg-[0-9.]+$' | tac | xargs)"
 
-index=0
+if [ -n "$preferred_version" ]
+then
+    if grep -q "v$preferred_version" <<< "${versions[*]}"
+    then
+        latest_version="llvmorg-$preferred_version"
+    fi
+else
+    latest_version="${versions[0]}"
+fi
+
 current_version=
-latest_version="${versions[$index]}"
 
 if [ -x "${prefix_path}/bin/clang" ]
 then
-    current_version="llvmorg-$(${prefix_path}/bin/clang --version | sed -En 's/.*[^0-9](([0-9]+\.){2}[0-9]+).*/\1/p;q')"
+    current_version="llvmorg-$("${prefix_path}/bin/clang" --version | sed -En 's/.*[^0-9](([0-9]+\.){2}[0-9]+).*/\1/p;q')"
 
     if [ "${current_version}" == "${latest_version}" ]
     then
@@ -54,10 +57,7 @@ fi
 
 notice "Switch to latest version ${latest_version}"
 git checkout "${latest_version}" || error "Failed to checkout latest version"
-#notice "Bootstraping"
-#./bootstrap --prefix="${prefix_path}" || error "Bootstraping failed"
-#notice "Configuring"
-#./configure --prefix="${prefix_path}" || error "Configuring failed"
+
 notice "Configuring"
 cmake -S llvm -B build -G 'Unix Makefiles' -D CMAKE_INSTALL_PREFIX="${prefix_path}" -D CMAKE_BUILD_TYPE=Release -D LLVM_ENABLE_PROJECTS="clang;lldb;clang-tools-extra;lld;cross-project-tests" -D LLVM_ENABLE_ASSERTIONS=ON -D LLVM_PARALLEL_COMPILE_JOBS=$(($(nproc) / 2 + 1)) -D LLVM_PARALLEL_LINK_JOBS=$(($(nproc) / 2 + 1)) -D LLVM_PARALLEL_TABELGEN_JOBS=$(($(nproc) / 2 + 1)) || error "Configuring failed"
 notice "Building"
@@ -68,4 +68,4 @@ notice "Installing"
 cmake --install build || error "Installation failed"
 
 success "Make executables visible by updating your PATH:"
-code "include_path ${prefix_path/$HOME/\$HOME}/.local/bin"
+code "include_path ${prefix_path/$HOME/\$HOME}/bin"
