@@ -25,6 +25,8 @@ $(scripts): script_notice
 	mkdir --parents $(HOME)/.local/bin
 	cp scripts/$@ $(HOME)/.local/bin
 
+services: $(services)
+
 $(services): service_notice
 	sudo cp services/$@ /usr/local/bin
 	sudo cp systemd/$@.timer /usr/lib/systemd/system/
