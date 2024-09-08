@@ -24,9 +24,19 @@ then
     error "failed to retrieve download link"
 fi
 
-if wget -q "https://github.com/${link}" -O "$(find /usr/share -type f -name plantuml.jar -quit -print)"
+jar_file="$(find /usr/share -type f -name plantuml.jar 2>/dev/null)"
+jar_file="${jar_file:-/usr/share/java/plantuml.jar}"
+tmp_file="$(mktemp)"
+
+if wget "https://github.com/${link}" -O "${tmp_file}"
 then
-    success "plantuml upgraded from '${current_version:-unknown}' to '$version'"
+    if [ -w "${jar_file}" ]
+    then
+        mv "${tmp_file}" "${jar_file}" && success "plantuml upgraded from '${current_version:-unknown}' to '$version'"
+    else
+        sudo mv "${tmp_file}" "${jar_file}" && success "plantuml upgraded from '${current_version:-unknown}' to '$version'"
+    fi
 else
+    echo $?
     error "failed to download version $version"
 fi
