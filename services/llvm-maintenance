@@ -2,7 +2,7 @@
 
 prefix_path="${PREFIX_PATH:-$HOME/.local}"
 source_path="$prefix_path/src"
-preferred_version="${1}"
+preferred_version="${1:+llvmorg-}${1}"
 
 error()   { echo -e "\033[1;31m$*\033[0m" >&2; exit 1; }
 notice()  { echo -e "\033[1;35m$*\033[0m"; }
@@ -34,12 +34,14 @@ read -ra versions <<< "$(git tag --sort version:refname | grep -E 'llvmorg-[0-9.
 
 if [ -n "$preferred_version" ]
 then
-    if grep -q "v$preferred_version" <<< "${versions[*]}"
+    if grep -q "$preferred_version" <<< "${versions[*]}"
     then
-        latest_version="llvmorg-$preferred_version"
+        required_version="$preferred_version"
+    else
+        error "Preffered version ${preferred_version} does not exist"
     fi
 else
-    latest_version="${versions[0]}"
+    required_version="${versions[0]}"
 fi
 
 current_version=
@@ -48,15 +50,20 @@ if [ -x "${prefix_path}/bin/clang" ]
 then
     current_version="llvmorg-$("${prefix_path}/bin/clang" --version | sed -En 's/.*[^0-9](([0-9]+\.){2}[0-9]+).*/\1/p;q')"
 
-    if [ "${current_version}" == "${latest_version}" ]
+    if [ "${current_version}" == "${required_version}" ]
     then
-        success "$(basename "${0%%-*}") already using latest version ${latest_version}"
+        if [ -n "${preferred_version}" ]
+        then
+            success "$(basename "${0%%-*}") already using version ${required_version}"
+        else
+            success "$(basename "${0%%-*}") already using latset version ${required_version}"
+        fi
         exit 0
     fi
 fi
 
-notice "Switch to latest version ${latest_version}"
-git checkout "${latest_version}" || error "Failed to checkout latest version"
+notice "Switching to version ${required_version}"
+git checkout "${required_version}" || error "Failed to checkout to ${required_version} release tag"
 
 notice "Configuring"
 cmake -S llvm -B build -G 'Unix Makefiles' -D CMAKE_INSTALL_PREFIX="${prefix_path}" -D CMAKE_BUILD_TYPE=Release -D LLVM_ENABLE_PROJECTS="clang;lldb;clang-tools-extra;lld;cross-project-tests" -D LLVM_ENABLE_ASSERTIONS=ON -D LLVM_PARALLEL_COMPILE_JOBS=$(($(nproc) / 2 + 1)) -D LLVM_PARALLEL_LINK_JOBS=$(($(nproc) / 2 + 1)) -D LLVM_PARALLEL_TABELGEN_JOBS=$(($(nproc) / 2 + 1)) || error "Configuring failed"
