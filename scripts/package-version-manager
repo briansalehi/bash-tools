@@ -26,24 +26,22 @@ fi
 
 for maintainer in "${selected_maintainers[@]}"
 do
-    echo "${maintainer%-*}"
-    for package in "$(${maintainer%-*} --version | grep -oE '\w+?\s?(version)?\s?\w+\.\w+\.\w+' | head -n1)"
+    for package in "$(${maintainer%-*} --version | grep -oE '\w+?\s?(version)?\s?\w+\.\w+\.\w+' | head -n1 | tr '[:upper:]' '[:lower:]')"
     do
-        echo "$package"
-        update_report["${package%% *}"]="${package##* }"
+        update_report["${maintainer}"]="${package##* }"
     done
 
     echo -e "\033[1;33m${maintainer%-*}\033[0m"
     "$maintainer"
 
-    for package in "$(${maintainer%-*} --version | grep -oE '\w+ version \w+.\w+.\w+')"
+    for package in "$(${maintainer%-*} --version | grep -oE '\w+?\s?(version)?\s?\w+\.\w+\.\w+' | head -n1 | tr '[:upper:]' '[:lower:]')"
     do
-        update_report["${package%% *}"]+=" => ${package##* }"
+        update_report["${maintainer}"]+=" => ${package##* }"
     done
 done
 
 echo -e "\033[1;35mUpdate Report\033[0m"
 for package in "${!update_report[@]}"
 do
-    echo -e "\033[1;34m${package,,}: \033[1;33m${update_report[$package]}\033[0m"
+    echo -e "\033[1;33m${package}: \033[1;31m${update_report[$package]}\033[0m"
 done
