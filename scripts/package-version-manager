@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 declare -a available_maintainers
+declare -A update_report
 
 for maintainer in cmake llvm node plantuml
 do
@@ -25,6 +26,22 @@ fi
 
 for maintainer in "${selected_maintainers[@]}"
 do
+    for package in "$(${maintainer%-*} --version | grep -oE '\w+ version \w+.\w+.\w+')"
+    do
+        update_report["${package%% *}"]="${package##* }"
+    done
+
     echo -e "\033[1;33m${maintainer%-*}\033[0m"
     "$maintainer"
+
+    for package in "$(${maintainer%-*} --version | grep -oE '\w+ version \w+.\w+.\w+')"
+    do
+        update_report["${package%% *}"]+=" => ${package##* }"
+    done
+done
+
+echo -e "\033[1;35mUpdate Report\033[0m"
+for package in "${!update_report[@]}"
+do
+    echo -e "\033[1;33m${package,,}: ${update_report[$package]}\033[0m"
 done
