@@ -3,7 +3,7 @@
 declare -a available_maintainers
 declare -A update_report
 
-for maintainer in cmake llvm node plantuml
+for maintainer in cmake clang node plantuml
 do
     maintainer="${maintainer}-maintenance"
     if command -v $maintainer &>/dev/null

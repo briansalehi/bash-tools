@@ -1,0 +1,9 @@
+[Unit]
+Description=Ninja Maintenance Routine
+
+[Timer]
+OnCalendar=Daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
