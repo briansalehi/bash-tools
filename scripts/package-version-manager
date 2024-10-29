@@ -27,7 +27,7 @@ fi
 for maintainer in "${selected_maintainers[@]}"
 do
     echo "${maintainer%-*}"
-    for package in "$(${maintainer%-*} --version | grep -oE '\w+?\s?(version)?\s?\w+\.\w+\.\w+')"
+    for package in "$(${maintainer%-*} --version | grep -oE '\w+?\s?(version)?\s?\w+\.\w+\.\w+' | head -n1)"
     do
         echo "$package"
         update_report["${package%% *}"]="${package##* }"
