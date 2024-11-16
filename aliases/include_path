@@ -33,11 +33,11 @@ function include_path
         then
             export PATH="${directory_path}${PATH:+:}${PATH}"
         # directory containing libraries are prepended to LD_LIBRARY_PATH
-        elif [ "$(basename "${directory_path}")" == "lib" ]
+        elif [ "$(basename "${directory_path}")" == "lib" ] || [ "$(basename "${directory_path}")" == "lib64" ]
         then
             export LD_LIBRARY_PATH="${directory_path}${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
         # same behavior when the path itself is not bin or lib but contains any of them
-        elif [ -d "${directory_path}/bin" ] || [ -d "${directory_path}/lib" ]
+        elif [ -d "${directory_path}/bin" ] || [ -d "${directory_path}/lib" ] || [ -d "${directory_path}/lib64" ]
         then
             if [ -d "${directory_path}/bin" ]
             then
@@ -47,6 +47,11 @@ function include_path
             if [ -d "${directory_path}/lib" ]
             then
                 export LD_LIBRARY_PATH="${directory_path}/lib${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+            fi
+
+            if [ -d "${directory_path}/lib64" ]
+            then
+                export LD_LIBRARY_PATH="${directory_path}/lib64${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
             fi
         fi
 
