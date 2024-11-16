@@ -2,19 +2,54 @@
 
 function include_path
 {
+    local directory_path
+    local directory_name
+
     while [ $# -gt 0 ]
     do
-        grep -qv "$(readlink -f "${1}")" <<< "${PATH}" && export PATH="$(readlink -f "${1}")${PATH:+:}${PATH}"
+        directory_path="$(readlink -f "${1}")"
+        directory_name="$(basename "${directory_path}")"
+
+        # avoid duplication
+        if grep -qv "${directory_path}" <<< "${PATH}"
+        then
+            shift
+            continue
+        fi
+
+        # ignore non-existing paths to make this function functional across different systems
+        if ! [ -e "${directory_path}" ]
+        then
+            shift
+            continue
+        # path is only meaningful when directory not anything else
+        elif ! [ -d "${directory_path}" ]
+        then
+            echo "${0}: path ${directory_path} is not a directory!" >&2 && shift && continue
+        fi
+
+        # directory containing binaries are prepended to PATH
+        if [ "$(basename "${directory_path}")" == "bin" ]
+        then
+            export PATH="${directory_path}${PATH:+:}${PATH}"
+        # directory containing libraries are prepended to LD_LIBRARY_PATH
+        elif [ "$(basename "${directory_path}")" == "lib" ]
+        then
+            export LD_LIBRARY_PATH="${directory_path}${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+        # same behavior when the path itself is not bin or lib but contains any of them
+        elif [ -d "${directory_path}/bin" ] || [ -d "${directory_path}/lib" ]
+        then
+            if [ -d "${directory_path}/bin" ]
+            then
+                export PATH="${directory_path}/bin${PATH:+:}${PATH}"
+            fi
+
+            if [ -d "${directory_path}/lib" ]
+            then
+                export LD_LIBRARY_PATH="${directory_path}/lib${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+            fi
+        fi
+
         shift
     done
 }
-
-function include_link_path
-{
-    while [ $# -gt 0 ]
-    do
-        grep -qv "${1}" <<< "${PATH}" && export PATH="${1}${PATH:+:}${PATH}"
-        shift
-    done
-}
-
