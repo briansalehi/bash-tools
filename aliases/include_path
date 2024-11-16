@@ -10,13 +10,6 @@ function include_path
         directory_path="$(readlink -f "${1}")"
         directory_name="$(basename "${directory_path}")"
 
-        # avoid duplication
-        if grep -qv "${directory_path}" <<< "${PATH}"
-        then
-            shift
-            continue
-        fi
-
         # ignore non-existing paths to make this function functional across different systems
         if ! [ -e "${directory_path}" ]
         then
@@ -29,29 +22,49 @@ function include_path
         fi
 
         # directory containing binaries are prepended to PATH
-        if [ "$(basename "${directory_path}")" == "bin" ]
+        if [ "${directory_name}" == "bin" ]
         then
-            export PATH="${directory_path}${PATH:+:}${PATH}"
+            # avoid duplication
+            if grep -qv "${directory_path}" <<< "${PATH}"
+            then
+                export PATH="${directory_path}${PATH:+:}${PATH}"
+            fi
         # directory containing libraries are prepended to LD_LIBRARY_PATH
-        elif [ "$(basename "${directory_path}")" == "lib" ] || [ "$(basename "${directory_path}")" == "lib64" ]
+        elif [ "${directory_name}" == "lib" ] || [ "${directory_name}" == "lib64" ]
         then
-            export LD_LIBRARY_PATH="${directory_path}${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+            # avoid duplication
+            if grep -qv "${directory_path}" <<< "${LD_LIBRARY_PATH}"
+            then
+                export LD_LIBRARY_PATH="${directory_path}${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+            fi
         # same behavior when the path itself is not bin or lib but contains any of them
         elif [ -d "${directory_path}/bin" ] || [ -d "${directory_path}/lib" ] || [ -d "${directory_path}/lib64" ]
         then
             if [ -d "${directory_path}/bin" ]
             then
-                export PATH="${directory_path}/bin${PATH:+:}${PATH}"
+                # avoid duplication
+                if grep -qv "${directory_path}" <<< "${PATH}"
+                then
+                    export PATH="${directory_path}/bin${PATH:+:}${PATH}"
+                fi
             fi
 
             if [ -d "${directory_path}/lib" ]
             then
-                export LD_LIBRARY_PATH="${directory_path}/lib${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+                # avoid duplication
+                if grep -qv "${directory_path}" <<< "${LD_LIBRARY_PATH}"
+                then
+                    export LD_LIBRARY_PATH="${directory_path}/lib${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+                fi
             fi
 
             if [ -d "${directory_path}/lib64" ]
             then
-                export LD_LIBRARY_PATH="${directory_path}/lib64${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+                # avoid duplication
+                if grep -qv "${directory_path}" <<< "${LD_LIBRARY_PATH}"
+                then
+                    export LD_LIBRARY_PATH="${directory_path}/lib64${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
+                fi
             fi
         fi
 
