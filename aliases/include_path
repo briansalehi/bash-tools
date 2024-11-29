@@ -25,7 +25,7 @@ function include_path
         if [ "${directory_name}" == "bin" ]
         then
             # avoid duplication
-            if grep -qv "${directory_path}" <<< "${PATH}"
+            if grep -qvw "${directory_path}" <<< "${PATH}"
             then
                 export PATH="${directory_path}${PATH:+:}${PATH}"
             fi
@@ -33,7 +33,7 @@ function include_path
         elif [ "${directory_name}" == "lib" ] || [ "${directory_name}" == "lib64" ]
         then
             # avoid duplication
-            if grep -qv "${directory_path}" <<< "${LD_LIBRARY_PATH}"
+            if grep -qvw "${directory_path}" <<< "${LD_LIBRARY_PATH}"
             then
                 export LD_LIBRARY_PATH="${directory_path}${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
             fi
@@ -43,7 +43,7 @@ function include_path
             if [ -d "${directory_path}/bin" ]
             then
                 # avoid duplication
-                if grep -qv "${directory_path}" <<< "${PATH}"
+                if grep -qvw "${directory_path}/bin" <<< "${PATH}"
                 then
                     export PATH="${directory_path}/bin${PATH:+:}${PATH}"
                 fi
@@ -52,7 +52,7 @@ function include_path
             if [ -d "${directory_path}/lib" ]
             then
                 # avoid duplication
-                if grep -qv "${directory_path}" <<< "${LD_LIBRARY_PATH}"
+                if grep -qvw "${directory_path}/lib" <<< "${LD_LIBRARY_PATH}"
                 then
                     export LD_LIBRARY_PATH="${directory_path}/lib${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
                 fi
@@ -61,7 +61,7 @@ function include_path
             if [ -d "${directory_path}/lib64" ]
             then
                 # avoid duplication
-                if grep -qv "${directory_path}" <<< "${LD_LIBRARY_PATH}"
+                if grep -qvw "${directory_path}/lib64" <<< "${LD_LIBRARY_PATH}"
                 then
                     export LD_LIBRARY_PATH="${directory_path}/lib64${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH}"
                 fi
