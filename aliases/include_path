@@ -68,6 +68,11 @@ function include_path
             fi
         fi
 
+        if find "${directory_path}" -maxdepth 1 -mindepth 1 -type f -executable | grep -q .
+        then
+            export PATH="${directory_path}${PATH:+:}${PATH}"
+        fi
+
         shift
     done
 }
