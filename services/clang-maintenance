@@ -66,7 +66,7 @@ notice "Switching to version ${required_version}"
 git checkout "${required_version}" || error "Failed to checkout to ${required_version} release tag"
 
 notice "Configuring"
-cmake -S llvm -B build -G 'Unix Makefiles' -D CMAKE_INSTALL_PREFIX="${prefix_path}" -D CMAKE_BUILD_TYPE=Release -D LLVM_ENABLE_PROJECTS="clang;lldb;clang-tools-extra;lld;cross-project-tests" -D LLVM_ENABLE_ASSERTIONS=ON -D LLVM_PARALLEL_COMPILE_JOBS=$(($(nproc) / 2 + 1)) -D LLVM_PARALLEL_LINK_JOBS=$(($(nproc) / 2 + 1)) -D LLVM_PARALLEL_TABELGEN_JOBS=$(($(nproc) / 2 + 1)) || error "Configuring failed"
+cmake -S llvm -B build -G 'Ninja' -D CMAKE_INSTALL_PREFIX="${prefix_path}" -D CMAKE_BUILD_TYPE=Release -D LLVM_ENABLE_PROJECTS="clang;lldb;clang-tools-extra;lld;cross-project-tests" -D LLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -D LLVM_ENABLE_ASSERTIONS=ON -D LLVM_PARALLEL_COMPILE_JOBS=$(($(nproc) / 2 + 1)) -D LLVM_PARALLEL_LINK_JOBS=$(($(nproc) / 2 + 1)) -D LLVM_PARALLEL_TABELGEN_JOBS=$(($(nproc) / 2 + 1)) --fresh || error "Configuring failed"
 notice "Building"
 cmake --build build --parallel $(($(nproc) / 2 + 1)) --target all        || error "Building failed"
 notice "Checking"
