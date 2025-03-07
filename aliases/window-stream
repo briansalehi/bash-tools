@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+window_stream() {
+    local window_size=${WINDOW_SIZE:-3}
+    local window_color="${WINDOW_COLOR:-5}"
+    local stream_file
+
+    stream_file="$(mktemp)"
+
+    tput sc
+
+    while read -r line
+    do
+        tput rc
+        tput bold
+        tput setaf "${window_color}"
+
+        echo "${line}" >> "${stream_file}"
+
+        tail -n "${window_size}" "${stream_file}"
+    done
+    tput bold
+    tput setaf 8
+    echo "stored in ${stream_file}"
+    tput sgr0
+    tput cnorm
+}
