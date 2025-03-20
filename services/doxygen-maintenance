@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+prefix_path="${PREFIX_PATH:-$HOME/.local}"
+source_path="$prefix_path/src"
+preferred_version="${1}"
+unset LDFLAGS
+unset CXXFLAGS
+unset CPPFLAGS
+
+error()   { echo -e "\033[1;31m$*\033[0m" >&2; exit 1; }
+notice()  { echo -e "\033[1;35m$*\033[0m"; }
+success() { echo -e "\033[1;32m$*\033[0m"; }
+code()    { echo -e "\n\t$*\n"; }
+
+mkdir --parents "${source_path}"
+cd "${source_path}" || error "Cannot move to ${source_path}"
+
+if ! [ -d doxygen ]
+then
+    notice "Cloning repository"
+    git clone https://github.com/doxygen/doxygen.git || error "Cloning failed"
+fi
+
+cd doxygen || error "Failed to move into ${source_path}/doxygen directory"
+
+notice "Cleaning repository"
+git status | sed -n '/^Untracked files:$/,/^$/{1,3d;p}' | xargs rm -rf
+
+notice "Updating repository"
+git checkout master &>/dev/null
+git pull --prune --tags origin | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)'
+
+notice "Fetching version list"
+read -ra versions <<< "$(git tag --sort version:refname | grep -E '^Release(_[0-9.]{1,2}){3}$' | tac | xargs)"
+
+current_version=
+target_version="${versions[0]}"
+
+if [ -n "$preferred_version" ]
+then
+    if grep -q "$preferred_version" <<< "${versions[*]}"
+    then
+        target_version="Release_${preferred_version//./_}"
+    fi
+fi
+
+if [ -x "${prefix_path}/bin/doxygen" ]
+then
+    current_version="Release_$("${prefix_path}/bin/doxygen" --version | awk '{print $1}' | tr '.' '_')"
+
+    if [ "${current_version}" == "${target_version}" ]
+    then
+        new_version=${target_version#*_}
+        new_version=${new_version//_/.}
+        success "$(basename "${0%%-*}") already using latest version ${new_version}"
+        exit 0
+    fi
+fi
+
+current_version=${current_version#*_}
+current_version=${current_version//_/.}
+new_version=${target_version#*_}
+new_version=${new_version//_/.}
+
+notice "Switching version${current_version:+ from }${current_version} to ${new_version}"
+git checkout "${target_version}" || error "Failed to checkout latest version"
+
+notice "Configuring"
+cmake -S . -B "../doxygen-${new_version}-build" -G "Unix Makefiles" -D CMAKE_INSTALL_PREFIX="${prefix_path}" || error "Configuring failed"
+
+notice "Building"
+cmake --build "../doxygen-${new_version}-build" --parallel || error "Building failed"
+
+notice "Installing"
+cmake --install "../doxygen-${new_version}-build" || error "Installation failed"
+
+if ! grep -q "${prefix_path}" <<< "$PATH"
+then
+    success "Make executables visible by updating your PATH:"
+    code "include_path ${prefix_path/$HOME/\$HOME}/.local/bin"
+fi

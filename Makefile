@@ -28,6 +28,8 @@ $(scripts): script_notice
 services: $(services)
 
 $(services): service_notice
+	mkdir --parents $(HOME)/.local/bin
+	cp services/$@ $(HOME)/.local/bin
 	sudo cp services/$@ /usr/local/bin
 	sudo cp systemd/$@.timer /usr/lib/systemd/system/
 	sudo cp systemd/$@.service /usr/lib/systemd/system/

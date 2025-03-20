@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 
 window_stream() {
-    readonly window_color="${WINDOW_COLOR:-5}"
-    readonly window_width=${COLUMNS}
-    readonly window_height=${LINES}
+    readonly frame_color="${WINDOW_COLOR:-5}"
     readonly frame_height=${WINDOW_SIZE:-3}
+    local window_width
+    local window_height
     local stream_file="/tmp/window.${RANDOM}"
     local scrolled_lines=0
     local reference_row
+
+    window_width=$(tput cols)
+    window_height=$(tput lines)
 
     # find a non-existing file to write the stream into
     while [ -s "${stream_file}" ]; do stream_file="/tmp/window.${RANDOM}"; done
@@ -23,7 +26,7 @@ window_stream() {
     then
         # clear frame to automatically scroll the window and make the frame visible
         printf '\033[%s;%sH' "${reference_row}" 0
-        for ((i = 0; i < frame_height; i++)); do printf "%*s\n" ${window_width} ""; done
+        for ((i = 0; i < frame_height; i++)); do printf "%*s\n" "${window_width}" ""; done
         printf '\033[%s;%sH' "${reference_row}" 0
 
         reference_row="$((reference_row - scrolled_lines))"
@@ -33,18 +36,18 @@ window_stream() {
     do
         # clear frame after processing previous buffer
         printf '\033[%s;%sH' "${reference_row}" 0
-        for ((i = 0; i < frame_height; i++)); do printf "%*s\n" ${window_width} ""; done
+        for ((i = 0; i < frame_height; i++)); do printf "%*s\n" "${window_width}" ""; done
         printf '\033[%s;%sH' "${reference_row}" 0
 
         # flush buffer in the frame
-        tput bold; tput setaf "${window_color}"
+        tput bold; tput setaf "${frame_color}"
         printf "%0.${window_width}s\n" "${line}" >> "${stream_file}"
         tail -n "${frame_height}" "${stream_file}"
     done
 
     # clear frame after processing the stream
     printf '\033[%s;%sH' "${reference_row}" 0
-    for ((i = 0; i < frame_height; i++)); do printf "%*s\n" ${window_width} ""; done
+    for ((i = 0; i < frame_height; i++)); do printf "%*s\n" "${window_width}" ""; done
     printf '\033[%s;%sH' "${reference_row}" 0
 
     # dump the file path where the stream was written into
