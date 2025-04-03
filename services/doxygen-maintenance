@@ -146,7 +146,7 @@ collect_current_version() {
         then
             new_version=${target_version#*_}
             new_version=${new_version//_/.}
-            success "$(basename "${0%%-*}") already using latest version ${new_version}"
+            success "$(basename "${0%%-*}") already on latest version ${new_version}"
             exit 0
         fi
     fi
@@ -158,7 +158,7 @@ collect_current_version() {
 }
 
 change_source_repository_version() {
-    notice "Switching version${current_version:+ from }${current_version} to ${new_version}"
+    notice "Switching ${current_version:+ from }${current_version} to version ${new_version}"
     ( git checkout "${target_version}" 2>&1 | window_stream ) || error "Failed to checkout latest version"
 }
 
