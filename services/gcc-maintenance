@@ -18,7 +18,7 @@ cd "${source_path}" || error "Cannot move to ${source_path}"
 if ! [ -d gcc ]
 then
     notice "Cloning repository"
-    git clone git://gcc.gnu.org/git/gcc.git || error "Cloning failed"
+    git clone https://github.com/gcc-mirror/gcc || error "Cloning failed"
 fi
 
 cd gcc || error "Failed to move into ${source_path}/gcc directory"
