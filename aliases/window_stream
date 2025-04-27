@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
 
 window_stream() {
+    local comment="$1"
     readonly frame_color="${WINDOW_COLOR:-5}"
     readonly frame_height=${WINDOW_SIZE:-3}
     local window_width
     local window_height
-    local stream_file="/tmp/window.${RANDOM}"
+    local stream_file="/tmp/${RANDOM}.log"
     local scrolled_lines=0
     local reference_row
 
     window_width=$(tput cols)
     window_height=$(tput lines)
+
+    IFS=';' read -rsdR -p $'\E[6n' comment_row _ </dev/tty
+    comment_row=${comment_row#*[}
+
+    log "$comment"
 
     # find a non-existing file to write the stream into
     while [ -s "${stream_file}" ]; do stream_file="/tmp/window.${RANDOM}"; done
@@ -51,7 +57,10 @@ window_stream() {
     printf '\033[%s;%sH' "${reference_row}" 0
 
     # dump the file path where the stream was written into
+    printf '\033[%s;%sH' "${comment_row}" $((${#comment}+2))
     tput bold; tput setaf 8
-    echo "stored in ${stream_file}"
+    echo "${stream_file}"
     tput sgr0; tput cnorm
+    printf '\033[%s;%sH' "${reference_row}" 0
 }
+

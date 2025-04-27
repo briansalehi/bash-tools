@@ -37,17 +37,22 @@ parse_arguments() {
 }
 
 window_stream() {
+    local comment="$1"
     readonly frame_color="${WINDOW_COLOR:-5}"
-    readonly frame_height=${WINDOW_SIZE:-5}
+    readonly frame_height=${WINDOW_SIZE:-3}
     local window_width
     local window_height
-    local stream_file
+    local stream_file="/tmp/${RANDOM}.log"
     local scrolled_lines=0
     local reference_row
 
     window_width=$(tput cols)
     window_height=$(tput lines)
-    stream_file="$(mktemp)"
+
+    IFS=';' read -rsdR -p $'\E[6n' comment_row _ </dev/tty
+    comment_row=${comment_row#*[}
+
+    log "$comment"
 
     # find a non-existing file to write the stream into
     while [ -s "${stream_file}" ]; do stream_file="/tmp/window.${RANDOM}"; done
@@ -88,11 +93,11 @@ window_stream() {
     printf '\033[%s;%sH' "${reference_row}" 0
 
     # dump the file path where the stream was written into
-    tput bold
-    tput setaf 8
-    echo -e "stored in ${stream_file}\033[0m"
-    tput cnorm
-    tput sgr0
+    printf '\033[%s;%sH' "${comment_row}" $((${#comment}+2))
+    tput bold; tput setaf 8
+    echo "${stream_file}"
+    tput sgr0; tput cnorm
+    printf '\033[%s;%sH' "${reference_row}" 0
 }
 
 prepare_source_repository() {
@@ -114,9 +119,8 @@ clean_source_repository() {
 }
 
 update_source_repository() {
-    notice "Updating repository"
     git checkout master &>/dev/null
-    git pull --prune --tags origin 2>&1 | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)' | window_stream
+    git pull --prune --tags origin 2>&1 | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)' | window_stream "Updating repository"
 }
 
 collect_available_versions() {
@@ -158,23 +162,19 @@ collect_current_version() {
 }
 
 change_source_repository_version() {
-    notice "Switching ${current_version:+ from }${current_version} to version ${new_version}"
-    ( git checkout "${target_version}" 2>&1 | window_stream ) || error "Failed to checkout latest version"
+    ( git checkout "${target_version}" 2>&1 | window_stream "Switching ${current_version:+ from }${current_version} to version ${new_version}") || error "Failed to checkout latest version"
 }
 
 configure_package() {
-    notice "Configuring"
-    ( cmake -S . -B "../${tool_name}-${new_version}-build" -G "Unix Makefiles" -D CMAKE_INSTALL_PREFIX="${prefix_path}" 2>&1 | window_stream ) || error "Configuring failed"
+    ( cmake -S . -B "../${tool_name}-${new_version}-build" -G "Unix Makefiles" -D CMAKE_INSTALL_PREFIX="${prefix_path}" 2>&1 | window_stream "Configuring") || error "Configuring failed"
 }
 
 build_project() {
-    notice "Building"
-    ( cmake --build "../${tool_name}-${new_version}-build" --parallel $(($(nproc) / 2)) 2>&1 | window_stream ) || error "Building failed"
+    ( cmake --build "../${tool_name}-${new_version}-build" --parallel $(($(nproc) / 2)) 2>&1 | window_stream "Building") || error "Building failed"
 }
 
 install_artifacts() {
-    notice "Installing"
-    ( cmake --install "../${tool_name}-${new_version}-build" 2>&1 | window_stream ) || error "Installation failed"
+    ( cmake --install "../${tool_name}-${new_version}-build" 2>&1 | window_stream "Installing") || error "Installation failed"
 }
 
 notify_path() {

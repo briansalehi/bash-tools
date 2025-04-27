@@ -10,9 +10,73 @@ distro="$(awk '{FS="="} $1=="ID" {print $2}' /etc/os-release | tr -d '"')"
 release="$(awk '{FS="="} $1=="VERSION_ID" {print $2}' /etc/os-release | tr -d '"')"
 
 error()   { echo -e "\033[1;31m$*\033[0m" >&2; exit 1; }
-notice()  { echo -e "\033[1;35m$*\033[0m"; }
+notice()  { echo -e "\033[1;33m$*\033[0m"; }
 success() { echo -e "\033[1;32m$*\033[0m"; }
 code()    { echo -e "\n\t$*\n"; }
+
+window_stream() {
+    local comment="$1"
+    readonly frame_color="${WINDOW_COLOR:-5}"
+    readonly frame_height=${WINDOW_SIZE:-3}
+    local window_width
+    local window_height
+    local stream_file="/tmp/${RANDOM}.log"
+    local scrolled_lines=0
+    local reference_row
+
+    window_width=$(tput cols)
+    window_height=$(tput lines)
+
+    IFS=';' read -rsdR -p $'\E[6n' comment_row _ </dev/tty
+    comment_row=${comment_row#*[}
+
+    log "$comment"
+
+    # find a non-existing file to write the stream into
+    while [ -s "${stream_file}" ]; do stream_file="/tmp/window.${RANDOM}"; done
+
+    # capture current cursor position
+    IFS=';' read -rsdR -p $'\E[6n' reference_row _ </dev/tty
+    reference_row=${reference_row#*[}
+
+    # handle cursor jump backs in a scrolling window
+    readonly next_cursor_position=$((reference_row + frame_height))
+    readonly scrolled_lines=$((next_cursor_position - window_height))
+    if [ "${next_cursor_position}" -gt "$window_height" ]
+    then
+        # clear frame to automatically scroll the window and make the frame visible
+        printf '\033[%s;%sH' "${reference_row}" 0
+        for ((i = 0; i < frame_height; i++)); do printf "%*s\n" "${window_width}" ""; done
+        printf '\033[%s;%sH' "${reference_row}" 0
+
+        reference_row="$((reference_row - scrolled_lines))"
+    fi
+
+    while read -r line
+    do
+        # clear frame after processing previous buffer
+        printf '\033[%s;%sH' "${reference_row}" 0
+        for ((i = 0; i < frame_height; i++)); do printf "%*s\n" "${window_width}" ""; done
+        printf '\033[%s;%sH' "${reference_row}" 0
+
+        # flush buffer in the frame
+        tput bold; tput setaf "${frame_color}"
+        printf "%0.${window_width}s\n" "${line}" >> "${stream_file}"
+        tail -n "${frame_height}" "${stream_file}"
+    done
+
+    # clear frame after processing the stream
+    printf '\033[%s;%sH' "${reference_row}" 0
+    for ((i = 0; i < frame_height; i++)); do printf "%*s\n" "${window_width}" ""; done
+    printf '\033[%s;%sH' "${reference_row}" 0
+
+    # dump the file path where the stream was written into
+    printf '\033[%s;%sH' "${comment_row}" $((${#comment}+2))
+    tput bold; tput setaf 8
+    echo "${stream_file}"
+    tput sgr0; tput cnorm
+    printf '\033[%s;%sH' "${reference_row}" 0
+}
 
 [ -d ${source_path} ] || mkdir -p ${source_path} || error "Cannot create ${source_path}"
 
@@ -29,7 +93,7 @@ then
     git pull --prune --tags origin | grep '[0-9]\+ files changed, [0-9]\+ insertions(+), [0-9]\+ deletions(-)'
 else
     notice "Cloning repository"
-    git clone https://github.com/ninja-build/ninja.git || error "Cloning failed"
+    ( git clone --progress https://github.com/ninja-build/ninja.git 2>&1 | window_stream ) || error "Cloning failed"
     cd ninja || error "${source_path}/ninja directory does not exist"
 fi
 
@@ -52,16 +116,12 @@ then
     fi
 fi
 
-notice "Switch version${current_version:+ from }${current_version} to ${latest_version}"
-git checkout "${latest_version}" || error "Failed to checkout latest version"
-notice "Bootstraping"
-./bootstrap --prefix="${prefix_path}" || error "Bootstraping failed"
-notice "Configuring"
-./configure --prefix="${prefix_path}" || error "Configuring failed"
-notice "Building"
-make -j$(($(nproc) / 2 + 1)) || error "Building failed"
-notice "Installing"
-make install || error "Installation failed"
+
+( git checkout "${latest_version}" 2>&1 | window_stream "Switch version${current_version:+ from }${current_version} to ${latest_version}" ) || error "Failed to checkout latest version"
+( ./bootstrap --prefix="${prefix_path}" 2>&1 | widnow_stream "Bootstraping" ) || error "Bootstraping failed"
+( ./configure --prefix="${prefix_path}" 2>&1 | window_stream "Configuring" ) || error "Configuring failed"
+( make -j$(($(nproc) / 2 + 1)) 2>&1 | window_stream "Building" ) || error "Building failed"
+( make install 2>&1 | window_stream "Installing") || error "Installation failed"
 
 success "Make executables visible by updating your PATH:"
 code "include_path ${prefix_path/$HOME/\$HOME}/.local/bin"
