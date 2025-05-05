@@ -7,7 +7,7 @@ function include_path
 
     while [ $# -gt 0 ]
     do
-        directory_path="$(readlink -f "${1}")"
+        directory_path="$1"
         directory_name="$(basename "${directory_path}")"
 
         # ignore non-existing paths to make this function functional across different systems
