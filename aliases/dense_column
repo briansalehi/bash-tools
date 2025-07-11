@@ -11,6 +11,8 @@ dense_column()
     local line_number=0
     local remaining_line=0
     local min_axes=0
+    local line_length=0
+    local line_bytes=0
     local buffer=""
 
     buffer="$(mktemp)"
@@ -19,10 +21,12 @@ dense_column()
     do
         echo "$line" >> "$buffer"
         total_lines=$((total_lines + 1))
-        [[ ${#line} -gt $max_line_width ]] && max_line_width=${#line}
+        line_length="$(sed -E 's/\x1B\[[0-9;]*[mK]//g' <<< "$line" | wc -c)"
+        [[ "${line_length}" -gt "$max_line_width" ]] && max_line_width="${line_length}" && line_bytes=${#line}
     done
 
     max_line_width=$((max_line_width + 4))
+    line_bytes=$((line_bytes + 4))
     max_columns=$((max_width / max_line_width))
     [[ $((total_lines % max_columns)) -gt 0 ]] && remaining_line=1
     max_lines=$((total_lines / max_columns + remaining_line))
@@ -32,7 +36,7 @@ dense_column()
         for column_number in $(seq $line_number $max_lines $total_lines)
         do
             line="$(sed -n "$((column_number))p" "$buffer")"
-            printf "%-${max_line_width}s" "$line"
+            printf "%-$((line_bytes))s" "$line"
         done
         echo
     done
