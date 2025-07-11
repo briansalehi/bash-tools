@@ -29,14 +29,7 @@ dense_column()
 
     for line_number in $(seq 1 $max_lines)
     do
-        if [[ ${max_columns} -gt ${max_lines} ]]
-        then
-            min_axes=${max_lines}
-        else
-            min_axes=${max_columns}
-        fi
-
-        for column_number in $(seq $line_number $min_axes $total_lines)
+        for column_number in $(seq $line_number $max_lines $total_lines)
         do
             line="$(sed -n "$((column_number))p" "$buffer")"
             printf "%-${max_line_width}s" "$line"
