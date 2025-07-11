@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+dense_column()
+{
+    local line=0
+    local max_line_width=0
+    local max_width=$(tput cols)
+    local total_lines=0
+    local max_columns=0
+    local column_number=0
+    local line_number=0
+    local remaining_line=0
+    local min_axes=0
+    local buffer=""
+
+    buffer="$(mktemp)"
+
+    while read -r line
+    do
+        echo "$line" >> "$buffer"
+        total_lines=$((total_lines + 1))
+        [[ ${#line} -gt $max_line_width ]] && max_line_width=${#line}
+    done
+
+    max_line_width=$((max_line_width + 4))
+    max_columns=$((max_width / max_line_width))
+    [[ $((total_lines % max_columns)) -gt 0 ]] && remaining_line=1
+    max_lines=$((total_lines / max_columns + remaining_line))
+
+    for line_number in $(seq 1 $max_lines)
+    do
+        if [[ ${max_columns} -gt ${max_lines} ]]
+        then
+            min_axes=${max_lines}
+        else
+            min_axes=${max_columns}
+        fi
+
+        for column_number in $(seq $line_number $min_axes $total_lines)
+        do
+            line="$(sed -n "$((column_number))p" "$buffer")"
+            printf "%-${max_line_width}s" "$line"
+        done
+        echo
+    done
+
+    rm "$buffer"
+}
